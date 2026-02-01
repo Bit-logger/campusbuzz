@@ -26,7 +26,7 @@ export default function FeedScreen({ navigation }) {
         // 1. Fetch Posts
         const { data: postsData, error: postsError } = await supabase
             .from('feed_posts')
-            .select('*')
+            .select('*, profiles(nickname, avatar_url)')
             .order('created_at', { ascending: false });
 
         if (postsError) {
@@ -58,14 +58,14 @@ export default function FeedScreen({ navigation }) {
         }, [currentUser])
     );
 
-    // --- Like Logic ---
+    // --- Like Logic (Fixed with RPC) ---
     const handleLike = async (post) => {
         if (!currentUser) return;
 
         const isLiked = likedPostIds.has(post.id);
         const newLikeCount = isLiked ? post.likes_count - 1 : post.likes_count + 1;
 
-        // Optimistic Update
+        // 1. Optimistic UI Update (Immediate feedback)
         setPosts(current =>
             current.map(p =>
                 p.id === post.id ? { ...p, likes_count: newLikeCount } : p
@@ -79,21 +79,60 @@ export default function FeedScreen({ navigation }) {
             return next;
         });
 
-        try {
-            if (isLiked) {
-                // UNLIKE: Delete from feed_likes
-                await supabase.from('feed_likes').delete().match({ post_id: post.id, user_id: currentUser.id });
-                await supabase.from('feed_posts').update({ likes_count: newLikeCount }).eq('id', post.id);
-            } else {
-                // LIKE: Insert into feed_likes
-                const { error } = await supabase.from('feed_likes').insert({ post_id: post.id, user_id: currentUser.id });
-                if (error && error.code === '23505') return; // Ignore duplicate key error safely
-                await supabase.from('feed_posts').update({ likes_count: newLikeCount }).eq('id', post.id);
-            }
-        } catch (err) {
-            console.error(err);
-            // Revert on error? For MVP we skip complex revert logic
+        // 2. Server Call (Using the new secure function)
+        const { error } = await supabase.rpc('toggle_like', { _post_id: post.id });
+
+        if (error) {
+            console.error("Like error:", error);
+            Alert.alert("Error", "Could not update like. Please try again.");
+            // Revert optimistic update if needed (omitted for simplicity)
         }
+    };
+
+    // --- Delete Logic ---
+    const handleDeletePost = async (post) => {
+        Alert.alert(
+            "Delete Post",
+            "Are you sure you want to delete this post?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        const { error } = await supabase.from('feed_posts').delete().eq('id', post.id);
+                        if (!error) {
+                            setPosts(prev => prev.filter(p => p.id !== post.id));
+                            Alert.alert("Success", "Post deleted");
+                        } else {
+                            Alert.alert("Error", error.message);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        Alert.alert(
+            "Delete Comment",
+            "Are you sure?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        const { error } = await supabase.from('feed_comments').delete().eq('id', commentId);
+                        if (!error) {
+                            setComments(prev => prev.filter(c => c.id !== commentId));
+                        } else {
+                            Alert.alert("Error", "Could not delete comment");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     // --- Comment Logic ---
@@ -146,18 +185,32 @@ export default function FeedScreen({ navigation }) {
         return (
             <View style={NB_STYLES.card}>
                 {/* Header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <View style={{
-                        width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
-                        borderWidth: 2, borderColor: 'black', marginRight: 10,
-                        alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{
+                            width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
+                            borderWidth: 2, borderColor: 'black', marginRight: 10,
+                            alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                        }}>
+                            {item.profiles?.avatar_url ? (
+                                <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', height: '100%' }} />
+                            ) : (
+                                <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
+                            )}
+                        </View>
+                        <View>
+                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                            </Text>
+                            <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
+                        </View>
                     </View>
-                    <View>
-                        <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.user_email?.split('@')[0]}</Text>
-                        <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
-                    </View>
+                    {/* Delete Post Button (Only for author) */}
+                    {currentUser?.id === item.user_id && (
+                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
+                            <Text style={{ fontSize: 20 }}>🗑️</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Image */}
@@ -191,7 +244,9 @@ export default function FeedScreen({ navigation }) {
                 {/* Caption */}
                 {item.caption && (
                     <Text style={{ fontSize: 16, lineHeight: 22 }}>
-                        <Text style={{ fontWeight: 'bold' }}>{item.user_email?.split('@')[0]}</Text> {item.caption}
+                        <Text style={{ fontWeight: 'bold' }}>
+                            {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                        </Text> {item.caption}
                     </Text>
                 )}
 
@@ -249,9 +304,17 @@ export default function FeedScreen({ navigation }) {
                             keyExtractor={item => item.id.toString()}
                             contentContainerStyle={{ padding: 15 }}
                             renderItem={({ item }) => (
-                                <View style={{ marginBottom: 15, paddingBottom: 10, borderBottomWidth: 1, borderColor: '#ccc' }}>
-                                    <Text style={{ fontWeight: 'bold', marginBottom: 2 }}>{item.user_email?.split('@')[0]}</Text>
-                                    <Text>{item.content}</Text>
+                                <View style={{ marginBottom: 15, paddingBottom: 10, borderBottomWidth: 1, borderColor: '#ccc', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ fontWeight: 'bold', marginBottom: 2 }}>{item.user_email?.split('@')[0]}</Text>
+                                        <Text>{item.content}</Text>
+                                    </View>
+                                    {/* Delete Comment (Only for owner) */}
+                                    {currentUser?.id === item.user_id && (
+                                        <TouchableOpacity onPress={() => handleDeleteComment(item.id)} style={{ padding: 5 }}>
+                                            <Text>🗑️</Text>
+                                        </TouchableOpacity>
+                                    )}
                                 </View>
                             )}
                             ListEmptyComponent={<Text style={{ textAlign: 'center', color: '#666', marginTop: 20 }}>No comments yet.</Text>}
