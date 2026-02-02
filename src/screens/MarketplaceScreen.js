@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput, Image, Alert, ScrollView, Modal } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import SquishyButton from '../components/SquishyButton';
 import { NB_STYLES, COLORS } from '../styles/theme';
 
 export default function MarketplaceScreen({ navigation }) {
@@ -66,6 +67,23 @@ export default function MarketplaceScreen({ navigation }) {
         else fetchItems();
     }
 
+    async function handleDelete(id) {
+        Alert.alert(
+            "Delete Item",
+            "Are you sure?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete", style: "destructive", onPress: async () => {
+                        const { error } = await supabase.from('marketplace_items').delete().eq('id', id);
+                        if (error) Alert.alert("Error", error.message);
+                        else fetchItems();
+                    }
+                }
+            ]
+        );
+    }
+
     const filteredItems = items.filter(item =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -86,12 +104,21 @@ export default function MarketplaceScreen({ navigation }) {
                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#666', marginBottom: 12 }}>📞 {item.contact_info}</Text>
 
                 {(user && item.seller_id === user.id && !isSold) && (
-                    <TouchableOpacity
-                        style={[NB_STYLES.btnSecondary, { paddingVertical: 8, marginBottom: 0 }]}
-                        onPress={() => markAsSold(item.id)}
-                    >
-                        <Text style={[NB_STYLES.btnText, { fontSize: 12 }]}>Mark Sold</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <SquishyButton
+                            style={{ paddingVertical: 8, marginBottom: 0, flex: 1, marginRight: 10 }}
+                            onPress={() => markAsSold(item.id)}
+                            label="Mark Sold"
+                            secondary
+                            textStyle={{ fontSize: 12 }}
+                        />
+                        <SquishyButton
+                            style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
+                            onPress={() => handleDelete(item.id)}
+                            label="🗑️"
+                            textStyle={{ fontSize: 24 }}
+                        />
+                    </View>
                 )}
                 {isSold && <Text style={{ fontWeight: '900', color: 'red', textTransform: 'uppercase' }}>❌ SOLD OUT</Text>}
             </View>
@@ -131,12 +158,12 @@ export default function MarketplaceScreen({ navigation }) {
                 contentContainerStyle={{ paddingBottom: 100 }}
             />
 
-            <TouchableOpacity
-                style={[NB_STYLES.btnPrimary, { position: 'absolute', bottom: 20, right: 20, borderRadius: 50, width: 60, height: 60, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' }]}
+            <SquishyButton
+                style={{ position: 'absolute', bottom: 20, right: 20, borderRadius: 30, width: 60, height: 60, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' }}
                 onPress={() => navigation.navigate('AddItem')}
-            >
-                <Text style={{ fontSize: 30 }}>+</Text>
-            </TouchableOpacity>
+                label="+"
+                textStyle={{ fontSize: 30 }}
+            />
         </View>
     );
 }

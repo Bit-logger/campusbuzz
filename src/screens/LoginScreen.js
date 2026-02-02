@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
+import SquishyButton from '../components/SquishyButton';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -200,9 +201,11 @@ export default function LoginScreen() {
                     )}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={uploadIdCard} disabled={loading}>
-                    <Text style={NB_STYLES.btnText}>{loading ? "UPLOADING..." : "SUBMIT ID"}</Text>
-                </TouchableOpacity>
+                <SquishyButton
+                    onPress={uploadIdCard}
+                    label={loading ? "UPLOADING..." : "SUBMIT ID"}
+                    disabled={loading}
+                />
             </View>
         );
     }
@@ -218,9 +221,12 @@ export default function LoginScreen() {
                     Your ID has been submitted. The Admin is reviewing your request.
                     {'\n\n'}Check back later!
                 </Text>
-                <TouchableOpacity style={NB_STYLES.btnSecondary} onPress={() => setUiState('login')}>
-                    <Text style={NB_STYLES.btnText}>BACK TO LOGIN</Text>
-                </TouchableOpacity>
+                <SquishyButton
+                    onPress={() => setUiState('login')}
+                    label="BACK TO LOGIN"
+                    secondary
+                    style={{ marginTop: 0 }}
+                />
             </View>
         );
     }
@@ -233,16 +239,23 @@ export default function LoginScreen() {
                 <Text style={{ textAlign: 'center', fontSize: 16, marginBottom: 30 }}>
                     Your account request was REJECTED by the Admin.
                 </Text>
-                <TouchableOpacity style={NB_STYLES.btnSecondary} onPress={() => setUiState('login')}>
-                    <Text style={NB_STYLES.btnText}>BACK TO LOGIN</Text>
-                </TouchableOpacity>
+                <SquishyButton
+                    onPress={() => setUiState('login')}
+                    label="BACK TO LOGIN"
+                    secondary
+                    style={{ marginTop: 0 }}
+                />
             </View>
         );
     }
 
     // --- DEFAULT LOGIN/SIGNUP UI ---
     return (
-        <View style={NB_STYLES.container}>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
                 <View style={{ marginTop: 60, marginBottom: 40, alignItems: 'center' }}>
                     <View style={{
@@ -297,15 +310,11 @@ export default function LoginScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity
-                        style={NB_STYLES.btnPrimary}
+                    <SquishyButton
                         onPress={handleAuth}
+                        label={loading ? "PROCESSING..." : (isSignUpMode ? "CREATE ACCOUNT" : "SIGN IN")}
                         disabled={loading}
-                    >
-                        <Text style={NB_STYLES.btnText}>
-                            {loading ? "PROCESSING..." : (isSignUpMode ? "CREATE ACCOUNT" : "SIGN IN")}
-                        </Text>
-                    </TouchableOpacity>
+                    />
 
                     <TouchableOpacity
                         style={[NB_STYLES.btnSecondary, { marginTop: 10, backgroundColor: 'transparent', borderWidth: 0 }]}
@@ -318,6 +327,6 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
     );
 }

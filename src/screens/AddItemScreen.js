@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Switch, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Switch, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
@@ -89,48 +89,54 @@ export default function AddItemScreen({ navigation }) {
     }
 
     return (
-        <ScrollView style={NB_STYLES.container}>
-            <Text style={NB_STYLES.headerTitle}>Sell Item</Text>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                <Text style={NB_STYLES.headerTitle}>Sell Item</Text>
 
-            <TouchableOpacity onPress={pickImage} style={[NB_STYLES.card, { alignItems: 'center', justifyContent: 'center', height: 150, borderStyle: 'dashed' }]}>
-                {image ? (
-                    <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                ) : (
-                    <Text style={{ fontWeight: 'bold', color: '#666' }}>+ Add Photo (Optional)</Text>
+                <TouchableOpacity onPress={pickImage} style={[NB_STYLES.card, { alignItems: 'center', justifyContent: 'center', height: 150, borderStyle: 'dashed' }]}>
+                    {image ? (
+                        <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    ) : (
+                        <Text style={{ fontWeight: 'bold', color: '#666' }}>+ Add Photo (Optional)</Text>
+                    )}
+                </TouchableOpacity>
+
+                <Text style={NB_STYLES.subHeader}>Item Details</Text>
+                <TextInput style={NB_STYLES.input} value={title} onChangeText={setTitle} placeholder="Item Name *" />
+                <TextInput style={NB_STYLES.input} value={description} onChangeText={setDescription} placeholder="Description" multiline />
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'space-between' }}>
+                    <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Is this Free?</Text>
+                    <Switch value={isFree} onValueChange={setIsFree} />
+                </View>
+
+                {!isFree && (
+                    <TextInput
+                        style={NB_STYLES.input}
+                        value={price}
+                        onChangeText={setPrice}
+                        placeholder="Price (₹) *"
+                        keyboardType="numeric"
+                    />
                 )}
-            </TouchableOpacity>
 
-            <Text style={NB_STYLES.subHeader}>Item Details</Text>
-            <TextInput style={NB_STYLES.input} value={title} onChangeText={setTitle} placeholder="Item Name *" />
-            <TextInput style={NB_STYLES.input} value={description} onChangeText={setDescription} placeholder="Description" multiline />
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Is this Free?</Text>
-                <Switch value={isFree} onValueChange={setIsFree} />
-            </View>
-
-            {!isFree && (
                 <TextInput
                     style={NB_STYLES.input}
-                    value={price}
-                    onChangeText={setPrice}
-                    placeholder="Price (₹) *"
-                    keyboardType="numeric"
+                    value={contactInfo}
+                    onChangeText={setContactInfo}
+                    placeholder="Phone / Room No *"
                 />
-            )}
 
-            <TextInput
-                style={NB_STYLES.input}
-                value={contactInfo}
-                onChangeText={setContactInfo}
-                placeholder="Phone / Room No *"
-            />
+                <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
+                    <Text style={NB_STYLES.btnText}>{loading ? "POSTING..." : "POST ITEM"}</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
-                <Text style={NB_STYLES.btnText}>{loading ? "POSTING..." : "POST ITEM"}</Text>
-            </TouchableOpacity>
-
-            <View style={{ height: 50 }} />
-        </ScrollView>
+                <View style={{ height: 50 }} />
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

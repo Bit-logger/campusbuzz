@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Button, Image, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Button, Image, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import SquishyButton from '../components/SquishyButton';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function PartnerFinderScreen({ navigation }) {
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
+    }, []);
 
     async function fetchPartners() {
         setLoading(true);
@@ -26,13 +32,40 @@ export default function PartnerFinderScreen({ navigation }) {
         }, [])
     );
 
+    const handleDelete = async (id) => {
+        Alert.alert(
+            "Delete Post",
+            "Are you sure you want to remove this?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete", style: "destructive", onPress: async () => {
+                        const { error } = await supabase.from('project_partners').delete().eq('id', id);
+                        if (error) Alert.alert("Error", error.message);
+                        else fetchPartners();
+                    }
+                }
+            ]
+        );
+    };
+
     const renderItem = ({ item }) => (
         <View style={NB_STYLES.card}>
-            <View style={{ marginBottom: 10 }}>
-                <Text style={{ fontSize: 22, fontWeight: '900', textTransform: 'uppercase' }}>{item.project_title}</Text>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.danger, marginTop: 4 }}>
-                    LOOKING FOR: {item.looking_for}
-                </Text>
+            <View style={{ marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 22, fontWeight: '900', textTransform: 'uppercase' }}>{item.project_title}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.danger, marginTop: 4 }}>
+                        LOOKING FOR: {item.looking_for}
+                    </Text>
+                </View>
+                {(currentUser && currentUser.id === item.poster_id) && (
+                    <SquishyButton
+                        onPress={() => handleDelete(item.id)}
+                        style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
+                        label="🗑️"
+                        textStyle={{ fontSize: 20 }}
+                    />
+                )}
             </View>
 
             <Text style={{ fontSize: 16, lineHeight: 22, marginBottom: 12 }}>{item.description}</Text>
@@ -62,12 +95,12 @@ export default function PartnerFinderScreen({ navigation }) {
         <View style={NB_STYLES.container}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <Text style={NB_STYLES.headerTitle}>DevMatch</Text>
-                <TouchableOpacity
-                    style={[NB_STYLES.btnPrimary, { marginBottom: 0, paddingVertical: 8, paddingHorizontal: 12 }]}
+                <SquishyButton
+                    style={{ marginBottom: 0, paddingVertical: 8, paddingHorizontal: 12, width: 50 }}
                     onPress={() => navigation.navigate('AddPartner')}
-                >
-                    <Text style={[NB_STYLES.btnText, { fontSize: 20 }]}>+</Text>
-                </TouchableOpacity>
+                    label="+"
+                    textStyle={{ fontSize: 20 }}
+                />
             </View>
 
             <FlatList

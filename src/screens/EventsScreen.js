@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, Image, ScrollView, RefreshControl, Modal, TextInput, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert, Image, ScrollView, RefreshControl, Modal, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 
@@ -115,7 +115,7 @@ export default function EventsScreen() {
                 keyExtractor={(item) => item.id.toString()}
                 refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchEvents} />}
                 ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, fontWeight: 'bold' }}>No upcoming events.</Text>}
-                contentContainerStyle={{ paddingBottom: 50 }}
+                contentContainerStyle={{ paddingBottom: 100 }}
             />
 
             {/* Registration Modal */}
@@ -125,55 +125,60 @@ export default function EventsScreen() {
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={styles.modalOverlay}
+                >
                     <View style={styles.modalContent}>
-                        <Text style={[NB_STYLES.subHeader, { textAlign: 'center', marginBottom: 20 }]}>
-                            Register for {selectedEvent?.title}
-                        </Text>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <Text style={[NB_STYLES.subHeader, { textAlign: 'center', marginBottom: 20 }]}>
+                                Register for {selectedEvent?.title}
+                            </Text>
 
-                        <TextInput
-                            placeholder="Full Name *"
-                            style={NB_STYLES.input}
-                            value={formData.name}
-                            onChangeText={(t) => setFormData({ ...formData, name: t })}
-                        />
-                        <TextInput
-                            placeholder="Roll Number *"
-                            style={NB_STYLES.input}
-                            value={formData.rollNo}
-                            onChangeText={(t) => setFormData({ ...formData, rollNo: t })}
-                        />
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                             <TextInput
-                                placeholder="Branch (e.g. CSE)"
-                                style={[NB_STYLES.input, { width: '48%' }]}
-                                value={formData.branch}
-                                onChangeText={(t) => setFormData({ ...formData, branch: t })}
+                                placeholder="Full Name *"
+                                style={NB_STYLES.input}
+                                value={formData.name}
+                                onChangeText={(t) => setFormData({ ...formData, name: t })}
                             />
                             <TextInput
-                                placeholder="Year (e.g. 3rd)"
-                                style={[NB_STYLES.input, { width: '48%' }]}
-                                value={formData.year}
-                                onChangeText={(t) => setFormData({ ...formData, year: t })}
+                                placeholder="Roll Number *"
+                                style={NB_STYLES.input}
+                                value={formData.rollNo}
+                                onChangeText={(t) => setFormData({ ...formData, rollNo: t })}
                             />
-                        </View>
-                        <TextInput
-                            placeholder="Phone Number *"
-                            style={NB_STYLES.input}
-                            keyboardType="phone-pad"
-                            value={formData.phone}
-                            onChangeText={(t) => setFormData({ ...formData, phone: t })}
-                        />
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <TextInput
+                                    placeholder="Branch (e.g. CSE)"
+                                    style={[NB_STYLES.input, { width: '48%' }]}
+                                    value={formData.branch}
+                                    onChangeText={(t) => setFormData({ ...formData, branch: t })}
+                                />
+                                <TextInput
+                                    placeholder="Year (e.g. 3rd)"
+                                    style={[NB_STYLES.input, { width: '48%' }]}
+                                    value={formData.year}
+                                    onChangeText={(t) => setFormData({ ...formData, year: t })}
+                                />
+                            </View>
+                            <TextInput
+                                placeholder="Phone Number *"
+                                style={NB_STYLES.input}
+                                keyboardType="phone-pad"
+                                value={formData.phone}
+                                onChangeText={(t) => setFormData({ ...formData, phone: t })}
+                            />
 
-                        <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={submitRegistration}>
-                            <Text style={NB_STYLES.btnText}>CONFIRM REGISTRATION</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={submitRegistration}>
+                                <Text style={NB_STYLES.btnText}>CONFIRM REGISTRATION</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 10 }}>
-                            <Text style={{ textAlign: 'center', fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 10, paddingBottom: 20 }}>
+                                <Text style={{ textAlign: 'center', fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     );

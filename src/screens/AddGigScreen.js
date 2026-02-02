@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 
@@ -42,8 +42,12 @@ export default function AddGigScreen({ navigation }) {
     };
 
     return (
-        <View style={NB_STYLES.container}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
+            <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <Text style={NB_STYLES.headerTitle}>Post a Gig Opportunity 💼</Text>
 
                 <View style={NB_STYLES.card}>
@@ -89,6 +93,6 @@ export default function AddGigScreen({ navigation }) {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
     );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 
@@ -40,30 +40,36 @@ export default function AddSkillScreen({ navigation }) {
     }
 
     return (
-        <ScrollView style={NB_STYLES.container}>
-            <Text style={NB_STYLES.headerTitle}>List a Skill</Text>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                <Text style={NB_STYLES.headerTitle}>List a Skill</Text>
 
-            <Text style={NB_STYLES.subHeader}>I can teach... (Skill Have)</Text>
-            <TextInput style={NB_STYLES.input} value={skillHave} onChangeText={setSkillHave} placeholder="e.g. Guitar, Python" />
+                <Text style={NB_STYLES.subHeader}>I can teach... (Skill Have)</Text>
+                <TextInput style={NB_STYLES.input} value={skillHave} onChangeText={setSkillHave} placeholder="e.g. Python, Guitar, Photography" />
 
-            <Text style={NB_STYLES.subHeader}>I want to learn... (Skill Want)</Text>
-            <TextInput style={NB_STYLES.input} value={skillWant} onChangeText={setSkillWant} placeholder="e.g. Spanish, React Native" />
+                <Text style={NB_STYLES.subHeader}>I want to learn... (Skill Want)</Text>
+                <TextInput style={NB_STYLES.input} value={skillWant} onChangeText={setSkillWant} placeholder="e.g. React Native, Spanish, Cooking" />
 
-            <Text style={NB_STYLES.subHeader}>Details</Text>
-            <TextInput
-                style={[NB_STYLES.input, { height: 100 }]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Briefly describe your skill level or availability..."
-                multiline
-            />
+                <Text style={NB_STYLES.subHeader}>Details</Text>
+                <TextInput
+                    style={[NB_STYLES.input, { height: 100 }]}
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Briefly describe your experience level or schedule availability..."
+                    multiline
+                />
 
-            <Text style={NB_STYLES.subHeader}>Contact Info</Text>
-            <TextInput style={NB_STYLES.input} value={contactInfo} onChangeText={setContactInfo} placeholder="Phone or Social Handle" />
+                <Text style={NB_STYLES.subHeader}>Contact Info</Text>
+                <TextInput style={NB_STYLES.input} value={contactInfo} onChangeText={setContactInfo} placeholder="Phone number or Social Handle" />
 
-            <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
-                <Text style={NB_STYLES.btnText}>{loading ? "Listing..." : "List Skill"}</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
+                    <Text style={NB_STYLES.btnText}>{loading ? "Listing..." : "List Skill"}</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

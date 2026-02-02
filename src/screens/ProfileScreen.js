@@ -104,7 +104,7 @@ export default function ProfileScreen({ navigation }) {
     }
 
     return (
-        <ScrollView contentContainerStyle={NB_STYLES.container}>
+        <ScrollView contentContainerStyle={[NB_STYLES.container, { paddingBottom: 100 }]}>
             <Text style={NB_STYLES.headerTitle}>Edit Profile</Text>
 
             <View style={{ alignItems: 'center', marginBottom: 30 }}>

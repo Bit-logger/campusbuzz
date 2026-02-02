@@ -7,6 +7,11 @@ import { useFocusEffect } from '@react-navigation/native';
 export default function SkillSwapScreen({ navigation }) {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
+    }, []);
 
     async function fetchSkills() {
         setLoading(true);
@@ -26,13 +31,37 @@ export default function SkillSwapScreen({ navigation }) {
         }, [])
     );
 
+    const handleDelete = async (id) => {
+        Alert.alert(
+            "Delete Skill",
+            "Are you sure?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete", style: "destructive", onPress: async () => {
+                        const { error } = await supabase.from('skill_swaps').delete().eq('id', id);
+                        if (error) Alert.alert("Error", error.message);
+                        else fetchSkills();
+                    }
+                }
+            ]
+        );
+    };
+
     const renderItem = ({ item }) => (
         <View style={NB_STYLES.card}>
-            <View style={{ marginBottom: 10 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                    <Text style={{ fontWeight: '900', color: COLORS.success, fontSize: 16 }}>TEACHING</Text>
+            <View style={{ marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <Text style={{ fontWeight: '900', color: COLORS.success, fontSize: 16 }}>TEACHING</Text>
+                    </View>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{item.skill_have}</Text>
                 </View>
-                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{item.skill_have}</Text>
+                {(currentUser && currentUser.id === item.user_id) && (
+                    <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ padding: 5 }}>
+                        <Text style={{ fontSize: 20 }}>🗑️</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             <View style={{ height: 2, backgroundColor: 'black', marginVertical: 8 }} />

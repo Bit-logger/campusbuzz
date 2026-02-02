@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
@@ -82,32 +82,38 @@ export default function AddPostScreen({ navigation }) {
     }
 
     return (
-        <ScrollView style={NB_STYLES.container}>
-            <Text style={NB_STYLES.headerTitle}>New Moment</Text>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                <Text style={NB_STYLES.headerTitle}>New Moment</Text>
 
-            <TouchableOpacity onPress={pickImage} style={[NB_STYLES.card, { alignItems: 'center', justifyContent: 'center', height: 300, borderStyle: 'dashed' }]}>
-                {image ? (
-                    <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                ) : (
-                    <View style={{ alignItems: 'center' }}>
-                        <Text style={{ fontSize: 40, marginBottom: 10 }}>📸</Text>
-                        <Text style={{ fontWeight: 'bold', color: '#666' }}>Tap to Select Photo</Text>
-                    </View>
-                )}
-            </TouchableOpacity>
+                <TouchableOpacity onPress={pickImage} style={[NB_STYLES.card, { alignItems: 'center', justifyContent: 'center', height: 300, borderStyle: 'dashed' }]}>
+                    {image ? (
+                        <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    ) : (
+                        <View style={{ alignItems: 'center' }}>
+                            <Text style={{ fontSize: 40, marginBottom: 10 }}>📸</Text>
+                            <Text style={{ fontWeight: 'bold', color: '#666' }}>Tap to Select Photo</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
 
-            <Text style={NB_STYLES.subHeader}>Caption</Text>
-            <TextInput
-                style={[NB_STYLES.input, { height: 100 }]}
-                value={caption}
-                onChangeText={setCaption}
-                placeholder="What's happening?"
-                multiline
-            />
+                <Text style={NB_STYLES.subHeader}>Caption</Text>
+                <TextInput
+                    style={[NB_STYLES.input, { height: 100 }]}
+                    value={caption}
+                    onChangeText={setCaption}
+                    placeholder="What's happening on campus today?"
+                    multiline
+                />
 
-            <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
-                <Text style={NB_STYLES.btnText}>{loading ? "POSTING..." : "SHARE MOMENT"}</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
+                    <Text style={NB_STYLES.btnText}>{loading ? "POSTING..." : "SHARE MOMENT"}</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

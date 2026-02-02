@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 
@@ -40,54 +40,60 @@ export default function ReportIssueScreen({ navigation }) {
     }
 
     return (
-        <ScrollView style={NB_STYLES.container}>
-            <Text style={NB_STYLES.headerTitle}>Report Issue</Text>
+        <KeyboardAvoidingView
+            style={NB_STYLES.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
+            <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+                <Text style={NB_STYLES.headerTitle}>Report Issue</Text>
 
-            <Text style={NB_STYLES.subHeader}>Category</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
-                {categories.map((cat) => (
-                    <TouchableOpacity
-                        key={cat}
-                        style={[
-                            localStyles.categoryBtn,
-                            category === cat && localStyles.categoryBtnActive
-                        ]}
-                        onPress={() => setCategory(cat)}
-                    >
-                        <Text style={[
-                            localStyles.categoryText,
-                            category === cat && { color: 'white' }
-                        ]}>{cat}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+                <Text style={NB_STYLES.subHeader}>Category</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
+                    {categories.map((cat) => (
+                        <TouchableOpacity
+                            key={cat}
+                            style={[
+                                localStyles.categoryBtn,
+                                category === cat && localStyles.categoryBtnActive
+                            ]}
+                            onPress={() => setCategory(cat)}
+                        >
+                            <Text style={[
+                                localStyles.categoryText,
+                                category === cat && { color: 'white' }
+                            ]}>{cat}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
 
-            <Text style={NB_STYLES.subHeader}>Location</Text>
-            <TextInput
-                style={NB_STYLES.input}
-                value={location}
-                onChangeText={setLocation}
-                placeholder="e.g. Block A, Room 301"
-            />
+                <Text style={NB_STYLES.subHeader}>Location</Text>
+                <TextInput
+                    style={NB_STYLES.input}
+                    value={location}
+                    onChangeText={setLocation}
+                    placeholder="e.g. Block A, Room 301"
+                />
 
-            <Text style={NB_STYLES.subHeader}>Description</Text>
-            <TextInput
-                style={[NB_STYLES.input, { height: 120 }]}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={4}
-                placeholder="Describe the problem..."
-            />
+                <Text style={NB_STYLES.subHeader}>Description</Text>
+                <TextInput
+                    style={[NB_STYLES.input, { height: 120 }]}
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline
+                    numberOfLines={4}
+                    placeholder="Describe the problem..."
+                />
 
-            <TouchableOpacity
-                style={[NB_STYLES.btnPrimary, { backgroundColor: COLORS.danger }]}
-                onPress={handleSubmit}
-                disabled={loading}
-            >
-                <Text style={NB_STYLES.btnText}>{loading ? "Submitting..." : "Submit Report"}</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                <TouchableOpacity
+                    style={[NB_STYLES.btnPrimary, { backgroundColor: COLORS.danger }]}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                >
+                    <Text style={NB_STYLES.btnText}>{loading ? "Submitting..." : "Submit Report"}</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
