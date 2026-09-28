@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { TouchableWithoutFeedback, Animated, View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useMemo } from 'react';
+import { TouchableWithoutFeedback, Animated, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../styles/theme';
 
-export default function SquishyButton({
+function SquishyButton({
     onPress,
     label,
     style,
@@ -12,9 +12,19 @@ export default function SquishyButton({
     secondary = false,
     children
 }) {
-    // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // Optimization: Use lazy ref initialization for Animated.Value to avoid instantiating
+    // a new Animated.Value object on every single render cycle.
+    const scaleValueRef = useRef(null);
+    if (!scaleValueRef.current) {
+        scaleValueRef.current = new Animated.Value(1);
+    }
+    const scaleValue = scaleValueRef.current;
+
+    const translateYRef = useRef(null);
+    if (!translateYRef.current) {
+        translateYRef.current = new Animated.Value(0);
+    }
+    const translateY = translateYRef.current;
 
     const onPressIn = () => {
         if (disabled) return;
@@ -50,8 +60,8 @@ export default function SquishyButton({
         ]).start();
     };
 
-    // Base Styles based on Neo-Brutalism (Hard Borders, Shadows)
-    const baseContainerStyle = {
+    // Optimization: Memoize static base container styles to avoid object re-creation on every render
+    const baseContainerStyle = useMemo(() => ({
         backgroundColor: secondary ? COLORS.surface : color,
         paddingVertical: 14,
         paddingHorizontal: 20,
@@ -61,8 +71,6 @@ export default function SquishyButton({
         alignItems: 'center',
         justifyContent: 'center',
         opacity: disabled ? 0.6 : 1,
-        // Hard Shadow simulated by view below or just keep flat border for now
-        // We will stick to the existing shadow style but handled uniquely
         ...Platform.select({
             ios: {
                 shadowColor: 'black',
@@ -75,7 +83,7 @@ export default function SquishyButton({
                 borderRightWidth: 6,
             },
         }),
-    };
+    }), [secondary, color, disabled]);
 
     return (
         <TouchableWithoutFeedback
@@ -89,8 +97,6 @@ export default function SquishyButton({
                 style,
                 {
                     transform: [{ scale: scaleValue }, { translateY: translateY }],
-                    // Remove shadow when pressed to simulate being pushed "into" the page
-                    // This is a bit tricky with static styles, but the translateY helps
                 }
             ]}>
                 {children ? children : <Text style={[styles.text, textStyle]}>{label}</Text>}
@@ -108,3 +114,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     }
 });
+
+// Optimization: Wrap with React.memo to skip rendering when props haven't changed
+export default React.memo(SquishyButton);
