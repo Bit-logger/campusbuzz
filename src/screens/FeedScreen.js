@@ -207,7 +207,7 @@ export default function FeedScreen({ navigation }) {
                     </View>
                     {/* Delete Post Button (Only for author) */}
                     {currentUser?.id === item.user_id && (
-                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
+                        <TouchableOpacity onPress={() => handleDeletePost(item)} accessibilityRole="button" accessibilityLabel="Delete Post">
                             <Text style={{ fontSize: 20 }}>🗑️</Text>
                         </TouchableOpacity>
                     )}
