@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, FlatList } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
@@ -94,23 +94,24 @@ export default function CalendarScreen() {
         setSelectedDate(null);
     };
 
-    const getDaysArray = () => {
+    // Performance optimization: Memoize grid days calculation to avoid re-allocating 35+ Date objects on every render.
+    const days = useMemo(() => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        const days = [];
+        const result = [];
         // Empty slots for previous month
         for (let i = 0; i < firstDay; i++) {
-            days.push(null);
+            result.push(null);
         }
         // Days of current month
         for (let i = 1; i <= daysInMonth; i++) {
-            days.push(new Date(year, month, i));
+            result.push(new Date(year, month, i));
         }
-        return days;
-    };
+        return result;
+    }, [currentDate]);
 
     const formatDateKey = (date) => {
         if (!date) return null;
@@ -120,12 +121,29 @@ export default function CalendarScreen() {
         return `${year}-${month}-${day}`;
     };
 
-    const getEventsForDate = (dateStr) => {
-        // Robust matching: Check if the event date string *contains* the selected YYYY-MM-DD
-        const off = officialEvents.filter(e => e.date && e.date.includes(dateStr));
-        const pers = personalEvents.filter(e => e.date && e.date.includes(dateStr));
-        return { official: off, personal: pers };
-    };
+    // Performance optimization: Index events by 'YYYY-MM-DD' date string into an O(1) hash map.
+    // Replaces O(N) array .filter() passes executed 35-42 times per grid render (e.g., on every keystroke when typing in modals).
+    // Expected Impact: Reduces cell lookup time from O(GridSize * N) to O(1) per cell during re-renders.
+    const eventsByDate = useMemo(() => {
+        const map = {};
+        const addEvent = (e, type) => {
+            if (!e || !e.date) return;
+            const dateKey = e.date.length >= 10 ? e.date.substring(0, 10) : e.date;
+            if (!map[dateKey]) map[dateKey] = { official: [], personal: [] };
+            map[dateKey][type].push(e);
+        };
+
+        officialEvents.forEach(e => addEvent(e, 'official'));
+        personalEvents.forEach(e => addEvent(e, 'personal'));
+        return map;
+    }, [officialEvents, personalEvents]);
+
+    const EMPTY_EVENTS = useMemo(() => ({ official: [], personal: [] }), []);
+
+    const getEventsForDate = useCallback((dateStr) => {
+        if (!dateStr) return EMPTY_EVENTS;
+        return eventsByDate[dateStr] || EMPTY_EVENTS;
+    }, [eventsByDate, EMPTY_EVENTS]);
 
     const handleDayPress = (date) => {
         if (!date) return;
@@ -195,7 +213,6 @@ export default function CalendarScreen() {
     };
 
     // Rendering
-    const days = getDaysArray();
     const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
     const currentYear = currentDate.getFullYear();
 
