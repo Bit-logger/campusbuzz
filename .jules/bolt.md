@@ -1,0 +1,3 @@
+## 2026-09-29 - MarketplaceScreen Optimizations
+**Learning:** React performance optimizations like useMemo and useCallback are highly effective for lists and filtering in React Native but can introduce unintentional closures if dependencies are missed.
+**Action:** Be sure to trace callback functions (like buyItem, handleDelete) to ensure their state variables are correctly added to dependency arrays in useCallback to prevent stale closures. Always verify `expo export` when adding components, and avoid installing development libraries just to run simple lint checks which dirty the lockfile and package.json.
