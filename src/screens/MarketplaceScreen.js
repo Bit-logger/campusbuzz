@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput, Image, Alert, ScrollView, Modal } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import SquishyButton from '../components/SquishyButton';
@@ -84,12 +84,20 @@ export default function MarketplaceScreen({ navigation }) {
         );
     }
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // ⚡ Bolt Optimization: Memoize filtered items to prevent recalculating on every re-render.
+    // Also hoisting searchQuery.toLowerCase() out of the filter loop avoids redundant string operations.
+    // Impact: Avoids N-2N redundant string transformations per filter pass.
+    const filteredItems = useMemo(() => {
+        const query = searchQuery.toLowerCase();
+        return items.filter(item =>
+            item.title.toLowerCase().includes(query) ||
+            item.description?.toLowerCase().includes(query)
+        );
+    }, [items, searchQuery]);
 
-    const renderItem = ({ item }) => {
+    // ⚡ Bolt Optimization: Wrap renderItem in useCallback to provide a stable reference
+    // to FlatList, preventing unnecessary re-renders of the list items.
+    const renderItem = useCallback(({ item }) => {
         const isSold = item.title.startsWith('[SOLD]');
         return (
             <View style={[NB_STYLES.card, isSold && { opacity: 0.6 }]}>
@@ -123,7 +131,7 @@ export default function MarketplaceScreen({ navigation }) {
                 {isSold && <Text style={{ fontWeight: '900', color: 'red', textTransform: 'uppercase' }}>❌ SOLD OUT</Text>}
             </View>
         );
-    };
+    }, [user, items]);
 
     return (
         <View style={NB_STYLES.container}>
