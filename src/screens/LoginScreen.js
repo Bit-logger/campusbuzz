@@ -5,6 +5,11 @@ import { NB_STYLES, COLORS } from '../styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 import SquishyButton from '../components/SquishyButton';
 
+// Security Helper: Validate email format to prevent malformed auth payloads
+const isValidEmail = (emailStr) => {
+    return typeof emailStr === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr.trim());
+};
+
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -74,8 +79,10 @@ export default function LoginScreen() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("No authenticated user.");
 
-            const fileExt = idCardUri.split('.').pop();
-            const fileName = `${user.id}.${fileExt}`;
+            // Security Hardening: Sanitize file extension to prevent storage key path manipulation
+            const rawExt = idCardUri.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
+            const safeExt = /^[a-z0-9]{3,4}$/.test(rawExt) ? rawExt : 'jpg';
+            const fileName = `${user.id}.${safeExt}`;
             const filePath = `${user.id}/${fileName}`;
 
             // CONVERT TO BASE64 (More reliable in Expo)
@@ -115,8 +122,9 @@ export default function LoginScreen() {
 
     // --- AUTH LOGIC ---
     async function handleAuth() {
-        if (!email || !password) {
-            Alert.alert("Missing Fields", "Please enter valid email and password.");
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail || !isValidEmail(trimmedEmail) || !password) {
+            Alert.alert("Invalid Input", "Please enter a valid email address and password.");
             return;
         }
 
@@ -132,7 +140,7 @@ export default function LoginScreen() {
 
             // Just create account. No ID upload yet (because no session).
             const { data: { session, user }, error: signUpError } = await supabase.auth.signUp({
-                email: email,
+                email: trimmedEmail,
                 password: password,
                 options: { data: { phone_number: phoneNumber } }
             });
@@ -147,7 +155,7 @@ export default function LoginScreen() {
         } else {
             // --- SIGN IN (Step 2: Check Verification) ---
             const { error, data } = await supabase.auth.signInWithPassword({
-                email: email,
+                email: trimmedEmail,
                 password: password,
             });
 
