@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { TouchableWithoutFeedback, Animated, View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useRef, memo } from 'react';
+import { TouchableWithoutFeedback, Animated, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../styles/theme';
 
-export default function SquishyButton({
+// PERFORMANCE OPTIMIZATION:
+// 1. Used lazy initialization with `useRef` for `Animated.Value` instances to ensure constructor calls
+//    `new Animated.Value(...)` only run on initial mount, preventing wasteful object allocations on re-renders.
+// 2. Extracted base style object creation and Platform.select out of the render loop into StyleSheet.create,
+//    eliminating inline object allocations and style recalculations on every render frame.
+// 3. Wrapped with `React.memo` to skip re-renders when parent components update state unless props actually change.
+// 4. Forwarded accessibility props (accessibilityLabel, accessibilityRole, accessibilityState, accessibilityHint) to ensure screen reader compatibility.
+
+const SquishyButton = memo(function SquishyButton({
     onPress,
     label,
     style,
@@ -10,11 +18,24 @@ export default function SquishyButton({
     disabled = false,
     color = COLORS.primary,
     secondary = false,
-    children
+    children,
+    accessibilityLabel,
+    accessibilityRole = 'button',
+    accessibilityState,
+    accessibilityHint
 }) {
-    // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // Lazy ref initialization for Animated.Values to avoid new Animated.Value instantiation on re-renders
+    const scaleValueRef = useRef(null);
+    if (!scaleValueRef.current) {
+        scaleValueRef.current = new Animated.Value(1);
+    }
+    const scaleValue = scaleValueRef.current;
+
+    const translateYRef = useRef(null);
+    if (!translateYRef.current) {
+        translateYRef.current = new Animated.Value(0);
+    }
+    const translateY = translateYRef.current;
 
     const onPressIn = () => {
         if (disabled) return;
@@ -50,9 +71,39 @@ export default function SquishyButton({
         ]).start();
     };
 
-    // Base Styles based on Neo-Brutalism (Hard Borders, Shadows)
-    const baseContainerStyle = {
-        backgroundColor: secondary ? COLORS.surface : color,
+    const containerBackgroundColor = secondary ? COLORS.surface : color;
+    const containerOpacity = disabled ? 0.6 : 1;
+
+    return (
+        <TouchableWithoutFeedback
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            onPress={onPress}
+            disabled={disabled}
+            accessibilityLabel={accessibilityLabel || label}
+            accessibilityRole={accessibilityRole}
+            accessibilityState={accessibilityState || { disabled }}
+            accessibilityHint={accessibilityHint}
+        >
+            <Animated.View style={[
+                styles.baseContainer,
+                {
+                    backgroundColor: containerBackgroundColor,
+                    opacity: containerOpacity,
+                    transform: [{ scale: scaleValue }, { translateY: translateY }],
+                },
+                style,
+            ]}>
+                {children ? children : <Text style={[styles.text, textStyle]}>{label}</Text>}
+            </Animated.View>
+        </TouchableWithoutFeedback>
+    );
+});
+
+export default SquishyButton;
+
+const styles = StyleSheet.create({
+    baseContainer: {
         paddingVertical: 14,
         paddingHorizontal: 20,
         borderWidth: 3,
@@ -60,9 +111,6 @@ export default function SquishyButton({
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: disabled ? 0.6 : 1,
-        // Hard Shadow simulated by view below or just keep flat border for now
-        // We will stick to the existing shadow style but handled uniquely
         ...Platform.select({
             ios: {
                 shadowColor: 'black',
@@ -75,31 +123,7 @@ export default function SquishyButton({
                 borderRightWidth: 6,
             },
         }),
-    };
-
-    return (
-        <TouchableWithoutFeedback
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            onPress={onPress}
-            disabled={disabled}
-        >
-            <Animated.View style={[
-                baseContainerStyle,
-                style,
-                {
-                    transform: [{ scale: scaleValue }, { translateY: translateY }],
-                    // Remove shadow when pressed to simulate being pushed "into" the page
-                    // This is a bit tricky with static styles, but the translateY helps
-                }
-            ]}>
-                {children ? children : <Text style={[styles.text, textStyle]}>{label}</Text>}
-            </Animated.View>
-        </TouchableWithoutFeedback>
-    );
-}
-
-const styles = StyleSheet.create({
+    },
     text: {
         fontSize: 16,
         fontWeight: '900',
