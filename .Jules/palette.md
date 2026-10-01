@@ -1,0 +1,3 @@
+## 2023-10-01 - React Native Custom Wrapper Accessibility
+**Learning:** Custom interactive wrappers like `TouchableWithoutFeedback` or custom animated buttons in React Native do not inherently inherit accessibility properties passed to them. If props like `accessibilityLabel`, `accessibilityRole`, or `accessibilityState` are not explicitly forwarded to the root interactive element, screen readers cannot properly interpret the element's purpose or state, especially for icon-only components.
+**Action:** Always verify that custom components (e.g., `SquishyButton`) destruct and forward accessibility props to their internal root interactive components (e.g., `TouchableWithoutFeedback`). Use default fallback values (like `accessibilityRole="button"`) where appropriate.
