@@ -24,6 +24,8 @@ export default function HomeScreen({ navigation }) {
                 <Text style={[NB_STYLES.headerTitle, { marginBottom: 0 }]}>CampusBuzz</Text>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('Profile')}
+                    accessibilityLabel="Profile"
+                    accessibilityRole="button"
                     style={{
                         width: 50, height: 50, borderRadius: 25, backgroundColor: COLORS.primary,
                         borderWidth: 3, borderColor: 'black', alignItems: 'center', justifyContent: 'center'
