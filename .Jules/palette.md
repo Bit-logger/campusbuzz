@@ -1,0 +1,3 @@
+## 2024-10-02 - Accessible Custom Interactive Components Wrapper Pattern
+**Learning:** Custom interactive components (like `SquishyButton`) wrapping elements such as `TouchableWithoutFeedback` swallow accessibility props (like `accessibilityLabel`, `accessibilityRole`, `accessibilityState`, `accessibilityHint`) preventing screen readers from accurately understanding and interacting with them if they aren't explicitly forwarded.
+**Action:** Next time creating or modifying a custom interactive wrapper component, ensure explicit forwarding of accessibility props to the root touchable/interactive component to guarantee screen reader compatibility.
