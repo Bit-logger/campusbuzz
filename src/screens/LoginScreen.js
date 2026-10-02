@@ -74,8 +74,11 @@ export default function LoginScreen() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("No authenticated user.");
 
-            const fileExt = idCardUri.split('.').pop();
-            const fileName = `${user.id}.${fileExt}`;
+            // SECURITY: Sanitize and validate file extension to prevent path manipulation/traversal and storage errors
+            const cleanUri = idCardUri.split('?')[0];
+            const rawExt = cleanUri.split('.').pop()?.toLowerCase();
+            const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+            const fileName = `${user.id}.${safeExt}`;
             const filePath = `${user.id}/${fileName}`;
 
             // CONVERT TO BASE64 (More reliable in Expo)
