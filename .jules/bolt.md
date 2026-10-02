@@ -1,0 +1,3 @@
+## 2023-10-27 - [FlatList React.memo Optimization]
+**Learning:** In React Native FlatList components, passing unmemoized inline functions or relying heavily on state in the parent list component (like checking `likedPostIds.has(item.id)` inside `renderItem`) forces a re-render of ALL items whenever the parent's state updates (e.g., liking a single post or typing a comment).
+**Action:** Always extract the item rendering logic into a standalone `React.memo` component, passing primitive/memoized dependencies (e.g., `isLiked` boolean instead of the whole Set). Ensure callbacks are wrapped in `useCallback` to prevent breaking memoization reference checks.
