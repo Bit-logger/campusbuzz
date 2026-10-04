@@ -1,0 +1,3 @@
+## 2024-05-24 - Memoizing FlatList items with inline action handlers
+**Learning:** In React Native, defining `renderItem` inline in components with highly interactive internal state (like typing a comment in a Modal mapped to the list) causes every keystroke to trigger an O(N) re-render of the entire `FlatList`. This is particularly impactful for image-heavy lists like a social feed.
+**Action:** Extract the complex item render function into a separate `React.memo` component, and memoize all action callbacks (like `onLike`, `onDelete`) with `useCallback` to ensure the `memo` check succeeds and prevents re-renders when parent state updates.
