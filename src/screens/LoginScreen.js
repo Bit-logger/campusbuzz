@@ -63,6 +63,11 @@ export default function LoginScreen() {
         }
     };
 
+    // --- VALIDATION HELPER ---
+    const isValidEmail = (emailStr) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
+    };
+
     // --- UPLOAD ID LOGIC (Authenticated) ---
     const uploadIdCard = async () => {
         if (!idCardUri) {
@@ -74,7 +79,10 @@ export default function LoginScreen() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("No authenticated user.");
 
-            const fileExt = idCardUri.split('.').pop();
+            // Sanitize file extension (strip query params and enforce image whitelist)
+            const rawExt = idCardUri.split('?')[0].split('.').pop()?.toLowerCase();
+            const allowedExts = ['jpg', 'jpeg', 'png', 'heic', 'webp'];
+            const fileExt = allowedExts.includes(rawExt) ? rawExt : 'jpg';
             const fileName = `${user.id}.${fileExt}`;
             const filePath = `${user.id}/${fileName}`;
 
@@ -115,8 +123,14 @@ export default function LoginScreen() {
 
     // --- AUTH LOGIC ---
     async function handleAuth() {
-        if (!email || !password) {
+        const cleanEmail = email.trim().toLowerCase();
+        if (!cleanEmail || !password) {
             Alert.alert("Missing Fields", "Please enter valid email and password.");
+            return;
+        }
+
+        if (!isValidEmail(cleanEmail)) {
+            Alert.alert("Invalid Email", "Please enter a valid email address.");
             return;
         }
 
@@ -132,7 +146,7 @@ export default function LoginScreen() {
 
             // Just create account. No ID upload yet (because no session).
             const { data: { session, user }, error: signUpError } = await supabase.auth.signUp({
-                email: email,
+                email: cleanEmail,
                 password: password,
                 options: { data: { phone_number: phoneNumber } }
             });
@@ -147,7 +161,7 @@ export default function LoginScreen() {
         } else {
             // --- SIGN IN (Step 2: Check Verification) ---
             const { error, data } = await supabase.auth.signInWithPassword({
-                email: email,
+                email: cleanEmail,
                 password: password,
             });
 
@@ -276,6 +290,7 @@ export default function LoginScreen() {
                         value={email}
                         placeholder="email@address.com"
                         autoCapitalize={'none'}
+                        maxLength={254}
                         style={NB_STYLES.input}
                     />
 
@@ -287,6 +302,7 @@ export default function LoginScreen() {
                                 value={phoneNumber}
                                 placeholder="+91 98765 43210"
                                 keyboardType="phone-pad"
+                                maxLength={20}
                                 style={NB_STYLES.input}
                             />
                         </>
@@ -300,6 +316,7 @@ export default function LoginScreen() {
                             secureTextEntry={!isPasswordVisible}
                             placeholder="Password"
                             autoCapitalize={'none'}
+                            maxLength={128}
                             style={[NB_STYLES.input, { marginBottom: 0 }]}
                         />
                         <TouchableOpacity
