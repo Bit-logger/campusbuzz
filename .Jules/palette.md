@@ -1,0 +1,3 @@
+## 2024-06-25 - Forwarding Accessibility Props in Custom Buttons
+**Learning:** Custom interactive UI components like `SquishyButton` (using `TouchableWithoutFeedback` + `Animated.View`) fail to announce properly to screen readers if accessibility props are ignored. Additionally, dynamically setting `accessibilityLabel` using a fallback like `label` can crash React Native if `label` receives a React node instead of a string.
+**Action:** Always manually forward `accessibilityRole`, `accessibilityLabel`, `accessibilityState`, and `accessibilityHint` to the root `Touchable` element of custom components. For fallback `accessibilityLabel` handling, verify the prop type (e.g., `typeof label === 'string'`) before assignment.
