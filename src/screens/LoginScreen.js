@@ -113,10 +113,30 @@ export default function LoginScreen() {
         setLoading(false);
     };
 
+    // --- AUTH VALIDATION HELPERS ---
+    const isValidEmail = (emailStr) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(emailStr);
+    };
+
     // --- AUTH LOGIC ---
     async function handleAuth() {
-        if (!email || !password) {
+        const trimmedEmail = email.trim();
+        const trimmedPhone = phoneNumber.trim();
+
+        if (!trimmedEmail || !password) {
             Alert.alert("Missing Fields", "Please enter valid email and password.");
+            return;
+        }
+
+        // Validate email format to prevent malformed or invalid inputs
+        if (!isValidEmail(trimmedEmail)) {
+            Alert.alert("Invalid Email", "Please enter a valid email address.");
+            return;
+        }
+
+        if (isSignUpMode && password.length < 6) {
+            Alert.alert("Weak Password", "Password must be at least 6 characters long.");
             return;
         }
 
@@ -124,7 +144,7 @@ export default function LoginScreen() {
 
         if (isSignUpMode) {
             // --- SIGN UP (Step 1: Create Account) ---
-            if (!phoneNumber) {
+            if (!trimmedPhone) {
                 Alert.alert("Missing Phone", "Please enter your phone number.");
                 setLoading(false);
                 return;
@@ -132,9 +152,9 @@ export default function LoginScreen() {
 
             // Just create account. No ID upload yet (because no session).
             const { data: { session, user }, error: signUpError } = await supabase.auth.signUp({
-                email: email,
+                email: trimmedEmail,
                 password: password,
-                options: { data: { phone_number: phoneNumber } }
+                options: { data: { phone_number: trimmedPhone } }
             });
 
             if (signUpError) {
@@ -147,7 +167,7 @@ export default function LoginScreen() {
         } else {
             // --- SIGN IN (Step 2: Check Verification) ---
             const { error, data } = await supabase.auth.signInWithPassword({
-                email: email,
+                email: trimmedEmail,
                 password: password,
             });
 
