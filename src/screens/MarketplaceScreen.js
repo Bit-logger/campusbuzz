@@ -116,6 +116,7 @@ export default function MarketplaceScreen({ navigation }) {
                             style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
                             onPress={() => handleDelete(item.id)}
                             label="🗑️"
+                            accessibilityLabel="Delete item"
                             textStyle={{ fontSize: 24 }}
                         />
                     </View>
@@ -162,6 +163,7 @@ export default function MarketplaceScreen({ navigation }) {
                 style={{ position: 'absolute', bottom: 20, right: 20, borderRadius: 30, width: 60, height: 60, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' }}
                 onPress={() => navigation.navigate('AddItem')}
                 label="+"
+                accessibilityLabel="Add new item"
                 textStyle={{ fontSize: 30 }}
             />
         </View>
