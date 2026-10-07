@@ -1,8 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput, Image, Alert, ScrollView, Modal } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import SquishyButton from '../components/SquishyButton';
 import { NB_STYLES, COLORS } from '../styles/theme';
+
+// Extract item card into React.memo to prevent O(N) re-renders when parent state updates or during search typing
+const MarketplaceItem = React.memo(function MarketplaceItem({ item, currentUserId, onMarkAsSold, onDelete }) {
+    const isSold = item.title.startsWith('[SOLD]');
+    return (
+        <View style={[NB_STYLES.card, isSold && { opacity: 0.6 }]}>
+            {item.image_url && (
+                <Image source={{ uri: item.image_url }} style={{ width: '100%', height: 200, marginBottom: 12, borderRadius: 4, borderWidth: 2, borderColor: 'black' }} />
+            )}
+            <Text style={[NB_STYLES.subHeader, { fontSize: 22 }]}>{item.title}</Text>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: item.is_free ? COLORS.success : COLORS.primary, marginBottom: 8 }}>
+                {item.is_free ? 'FREE' : `₹${item.price}`}
+            </Text>
+            <Text style={{ fontSize: 16, marginBottom: 12, lineHeight: 22 }}>{item.description}</Text>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#666', marginBottom: 12 }}>📞 {item.contact_info}</Text>
+
+            {(currentUserId && item.seller_id === currentUserId && !isSold) && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <SquishyButton
+                        style={{ paddingVertical: 8, marginBottom: 0, flex: 1, marginRight: 10 }}
+                        onPress={() => onMarkAsSold(item.id, item.title)}
+                        label="Mark Sold"
+                        secondary
+                        textStyle={{ fontSize: 12 }}
+                    />
+                    <SquishyButton
+                        style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
+                        onPress={() => onDelete(item.id)}
+                        label="🗑️"
+                        textStyle={{ fontSize: 24 }}
+                    />
+                </View>
+            )}
+            {isSold && <Text style={{ fontWeight: '900', color: 'red', textTransform: 'uppercase' }}>❌ SOLD OUT</Text>}
+        </View>
+    );
+});
 
 export default function MarketplaceScreen({ navigation }) {
     const [items, setItems] = useState([]);
@@ -57,17 +94,17 @@ export default function MarketplaceScreen({ navigation }) {
     }, [navigation, filter]);
 
 
-    async function markAsSold(id) {
+    const markAsSold = useCallback(async (id, currentTitle) => {
         const { error } = await supabase
             .from('marketplace_items')
-            .update({ title: '[SOLD] ' + items.find(i => i.id === id).title }) // Simple visual marker for MVP
+            .update({ title: '[SOLD] ' + currentTitle }) // Simple visual marker for MVP
             .eq('id', id);
 
         if (error) Alert.alert('Error', error.message);
         else fetchItems();
-    }
+    }, []);
 
-    async function handleDelete(id) {
+    const handleDelete = useCallback((id) => {
         Alert.alert(
             "Delete Item",
             "Are you sure?",
@@ -82,48 +119,27 @@ export default function MarketplaceScreen({ navigation }) {
                 }
             ]
         );
-    }
+    }, []);
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const renderItem = ({ item }) => {
-        const isSold = item.title.startsWith('[SOLD]');
-        return (
-            <View style={[NB_STYLES.card, isSold && { opacity: 0.6 }]}>
-                {item.image_url && (
-                    <Image source={{ uri: item.image_url }} style={{ width: '100%', height: 200, marginBottom: 12, borderRadius: 4, borderWidth: 2, borderColor: 'black' }} />
-                )}
-                <Text style={[NB_STYLES.subHeader, { fontSize: 22 }]}>{item.title}</Text>
-                <Text style={{ fontSize: 18, fontWeight: '900', color: item.is_free ? COLORS.success : COLORS.primary, marginBottom: 8 }}>
-                    {item.is_free ? 'FREE' : `₹${item.price}`}
-                </Text>
-                <Text style={{ fontSize: 16, marginBottom: 12, lineHeight: 22 }}>{item.description}</Text>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#666', marginBottom: 12 }}>📞 {item.contact_info}</Text>
-
-                {(user && item.seller_id === user.id && !isSold) && (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <SquishyButton
-                            style={{ paddingVertical: 8, marginBottom: 0, flex: 1, marginRight: 10 }}
-                            onPress={() => markAsSold(item.id)}
-                            label="Mark Sold"
-                            secondary
-                            textStyle={{ fontSize: 12 }}
-                        />
-                        <SquishyButton
-                            style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
-                            onPress={() => handleDelete(item.id)}
-                            label="🗑️"
-                            textStyle={{ fontSize: 24 }}
-                        />
-                    </View>
-                )}
-                {isSold && <Text style={{ fontWeight: '900', color: 'red', textTransform: 'uppercase' }}>❌ SOLD OUT</Text>}
-            </View>
+    // Performance optimization: Memoize search query filtering to prevent O(N) recalculation on unrelated renders
+    const filteredItems = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return items;
+        return items.filter(item =>
+            item.title.toLowerCase().includes(query) ||
+            item.description?.toLowerCase().includes(query)
         );
-    };
+    }, [items, searchQuery]);
+
+    // Performance optimization: Memoize renderItem callback to preserve reference for FlatList
+    const renderItem = useCallback(({ item }) => (
+        <MarketplaceItem
+            item={item}
+            currentUserId={user?.id}
+            onMarkAsSold={markAsSold}
+            onDelete={handleDelete}
+        />
+    ), [user?.id, markAsSold, handleDelete]);
 
     return (
         <View style={NB_STYLES.container}>
