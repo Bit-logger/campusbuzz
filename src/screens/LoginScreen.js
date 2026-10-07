@@ -115,8 +115,20 @@ export default function LoginScreen() {
 
     // --- AUTH LOGIC ---
     async function handleAuth() {
-        if (!email || !password) {
+        const cleanEmail = email.trim().toLowerCase();
+        if (!cleanEmail || !password) {
             Alert.alert("Missing Fields", "Please enter valid email and password.");
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(cleanEmail)) {
+            Alert.alert("Invalid Email", "Please enter a valid email address.");
+            return;
+        }
+
+        if (isSignUpMode && password.length < 6) {
+            Alert.alert("Weak Password", "Password must be at least 6 characters long.");
             return;
         }
 
@@ -124,7 +136,7 @@ export default function LoginScreen() {
 
         if (isSignUpMode) {
             // --- SIGN UP (Step 1: Create Account) ---
-            if (!phoneNumber) {
+            if (!phoneNumber.trim()) {
                 Alert.alert("Missing Phone", "Please enter your phone number.");
                 setLoading(false);
                 return;
@@ -132,9 +144,9 @@ export default function LoginScreen() {
 
             // Just create account. No ID upload yet (because no session).
             const { data: { session, user }, error: signUpError } = await supabase.auth.signUp({
-                email: email,
+                email: cleanEmail,
                 password: password,
-                options: { data: { phone_number: phoneNumber } }
+                options: { data: { phone_number: phoneNumber.trim() } }
             });
 
             if (signUpError) {
@@ -147,7 +159,7 @@ export default function LoginScreen() {
         } else {
             // --- SIGN IN (Step 2: Check Verification) ---
             const { error, data } = await supabase.auth.signInWithPassword({
-                email: email,
+                email: cleanEmail,
                 password: password,
             });
 
