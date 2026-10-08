@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility Props Forwarding in Custom Interactive Components
+**Learning:** When creating custom interactive components in React Native that wrap standard elements like `TouchableWithoutFeedback` or `Pressable` (e.g., SquishyButton), accessibility props (such as `accessibilityLabel`, `accessibilityRole`, and `accessibilityState`) must be explicitly forwarded to the root interactive element. Not doing so prevents screen readers from understanding the interactive nature and state of the component.
+**Action:** Always verify that custom buttons forward `accessibilityRole="button"`, `accessibilityLabel`, and `accessibilityState={{disabled}}` to the outermost interactive element in React Native.
