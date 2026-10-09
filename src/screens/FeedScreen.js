@@ -155,6 +155,12 @@ export default function FeedScreen({ navigation }) {
     const submitComment = async () => {
         if (!newComment.trim() || !currentUser) return;
 
+        // Input validation: Enforce maximum length limit on comment (DoS / payload size risk)
+        if (newComment.length > 500) {
+            Alert.alert("Error", "Comment exceeds the maximum limit of 500 characters.");
+            return;
+        }
+
         const tempId = Date.now();
         const optimisticComment = {
             id: tempId,
@@ -327,6 +333,7 @@ export default function FeedScreen({ navigation }) {
                                 placeholder="Add a comment..."
                                 value={newComment}
                                 onChangeText={setNewComment}
+                                maxLength={500}
                             />
                             <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={submitComment}>
                                 <Text style={NB_STYLES.btnText}>SEND</Text>
