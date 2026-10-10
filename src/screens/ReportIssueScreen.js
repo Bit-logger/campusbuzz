@@ -21,6 +21,13 @@ export default function ReportIssueScreen({ navigation }) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
+            // Ensure reporter is authenticated to prevent null user dereferencing
+            if (!user) {
+                Alert.alert('Error', 'You must be signed in to submit a report.');
+                setLoading(false);
+                return;
+            }
+
             const { error } = await supabase.from('issues').insert({
                 category,
                 description,
