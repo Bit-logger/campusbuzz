@@ -1,0 +1,3 @@
+## 2024-05-24 - FlatList Re-render Bottleneck
+**Learning:** In React Native, `FlatList` components rendering complex inline items re-render O(N) items whenever the parent state changes (e.g. `likedPostIds`). Relying on parent state closure in callbacks defeats the purpose of React.memo if the parent state is added to the callback's dependency array.
+**Action:** Always extract `FlatList` render items into `React.memo` components. When event handlers need item-specific state to determine the next state, pass that state *from the child up to the parent* via the callback arguments (e.g., `onLike(item, isLiked)`), keeping the callback's dependency array minimal.
