@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TouchableWithoutFeedback, Animated, View, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../styles/theme';
 
-export default function SquishyButton({
+function SquishyButton({
     onPress,
     label,
     style,
@@ -12,9 +12,10 @@ export default function SquishyButton({
     secondary = false,
     children
 }) {
-    // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // Performance optimization: Use lazy initializers for useState to instantiate Animated.Value only once on initial mount
+    // rather than creating new unused Animated.Value objects on every render.
+    const [scaleValue] = useState(() => new Animated.Value(1));
+    const [translateY] = useState(() => new Animated.Value(0));
 
     const onPressIn = () => {
         if (disabled) return;
@@ -108,3 +109,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     }
 });
+
+// Performance optimization: Wrap SquishyButton with React.memo to prevent unnecessary re-renders
+// when parent component state updates without prop changes.
+export default React.memo(SquishyButton);
