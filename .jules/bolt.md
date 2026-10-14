@@ -1,0 +1,5 @@
+## 2025-02-12 - Memoizing FlatList Callbacks that Require State
+
+**Learning:** When trying to use `React.memo` for React Native `FlatList` elements, putting item-specific or dynamic state (like `likedPostIds` or `isLiked`) into the dependency array of a `useCallback` hook that is passed to the child component will break the optimization, causing all list items to re-render whenever one changes. However, if the handler callback reads the item-specific state when invoked, the handler either goes stale or triggers O(N) re-renders across all items when the state changes.
+
+**Action:** When memoizing React callbacks that need item-specific state to safely update without breaking referential stability or adding those states to the dependency array, pass the required state back up from the child component via the callback (e.g., `<Button onPress={() => handleLike(item, isLiked)} />`), rather than attempting to read it synchronously inside deferred state setter functions or keeping it in the callback dependency list.
