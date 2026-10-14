@@ -1,0 +1,3 @@
+## 2023-10-14 - Custom Component Accessibility Forwarding
+**Learning:** When building custom interactive components in React Native (like `SquishyButton`), accessibility props (`accessibilityLabel`, `accessibilityRole`, etc.) do not automatically pass through to the underlying touchable element. Additionally, fallback logic like `accessibilityLabel || label` can crash or behave unexpectedly if `label` is a React Node instead of a string.
+**Action:** Always explicitly forward accessibility props to the root interactive element of a custom component. When using fallback props for `accessibilityLabel`, ensure the fallback value is explicitly type-checked to be a string.
