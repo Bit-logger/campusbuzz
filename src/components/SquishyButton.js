@@ -13,8 +13,10 @@ export default function SquishyButton({
     children
 }) {
     // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // ⚡ Bolt Optimization: Use lazy initializers to prevent re-instantiating
+    // unused Animated.Value objects on every render pass.
+    const [scaleValue] = useState(() => new Animated.Value(1));
+    const [translateY] = useState(() => new Animated.Value(0));
 
     const onPressIn = () => {
         if (disabled) return;
