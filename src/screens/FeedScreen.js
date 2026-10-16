@@ -207,7 +207,11 @@ export default function FeedScreen({ navigation }) {
                     </View>
                     {/* Delete Post Button (Only for author) */}
                     {currentUser?.id === item.user_id && (
-                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
+                        <TouchableOpacity
+                            onPress={() => handleDeletePost(item)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Delete post"
+                        >
                             <Text style={{ fontSize: 20 }}>🗑️</Text>
                         </TouchableOpacity>
                     )}
@@ -229,12 +233,18 @@ export default function FeedScreen({ navigation }) {
                     <TouchableOpacity
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                         onPress={() => handleLike(item)}
+                        accessibilityRole="button"
+                        accessibilityLabel={isLiked ? "Unlike post" : "Like post"}
                     >
                         <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
                     </TouchableOpacity>
 
                     {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
+                    <TouchableOpacity
+                        onPress={() => openComments(item.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Comment on post"
+                    >
                         <Text style={{ fontSize: 28 }}>💬</Text>
                     </TouchableOpacity>
                 </View>
@@ -250,7 +260,11 @@ export default function FeedScreen({ navigation }) {
                     </Text>
                 )}
 
-                <TouchableOpacity onPress={() => openComments(item.id)}>
+                <TouchableOpacity
+                    onPress={() => openComments(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel="View all comments"
+                >
                     <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
                 </TouchableOpacity>
             </View>
@@ -264,6 +278,8 @@ export default function FeedScreen({ navigation }) {
                 <TouchableOpacity
                     style={[NB_STYLES.btnPrimary, { marginBottom: 0, paddingVertical: 8, paddingHorizontal: 12 }]}
                     onPress={() => navigation.navigate('AddPost')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add new post"
                 >
                     <Text style={[NB_STYLES.btnText, { fontSize: 20 }]}>+</Text>
                 </TouchableOpacity>
@@ -293,7 +309,11 @@ export default function FeedScreen({ navigation }) {
                         {/* Modal Header */}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 15, borderBottomWidth: 3 }}>
                             <Text style={{ fontSize: 20, fontWeight: '900' }}>Comments</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
+                            <TouchableOpacity
+                                onPress={() => setModalVisible(false)}
+                                accessibilityRole="button"
+                                accessibilityLabel="Close comments"
+                            >
                                 <Text style={{ fontSize: 20 }}>❌</Text>
                             </TouchableOpacity>
                         </View>
@@ -311,7 +331,12 @@ export default function FeedScreen({ navigation }) {
                                     </View>
                                     {/* Delete Comment (Only for owner) */}
                                     {currentUser?.id === item.user_id && (
-                                        <TouchableOpacity onPress={() => handleDeleteComment(item.id)} style={{ padding: 5 }}>
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteComment(item.id)}
+                                            style={{ padding: 5 }}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="Delete comment"
+                                        >
                                             <Text>🗑️</Text>
                                         </TouchableOpacity>
                                     )}
