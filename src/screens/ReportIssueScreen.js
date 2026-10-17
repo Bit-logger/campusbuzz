@@ -12,7 +12,10 @@ export default function ReportIssueScreen({ navigation }) {
     const categories = ['Infrastructure', 'Faculty', 'Cleanliness', 'Other'];
 
     async function handleSubmit() {
-        if (!description || !location) {
+        const trimmedDescription = description.trim();
+        const trimmedLocation = location.trim();
+
+        if (!trimmedDescription || !trimmedLocation) {
             Alert.alert('Error', 'Please fill all fields');
             return;
         }
@@ -21,10 +24,15 @@ export default function ReportIssueScreen({ navigation }) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
+            // Prevent null pointer exception and verify user session before reporting issue
+            if (!user) {
+                throw new Error('User not authenticated. Please log in again.');
+            }
+
             const { error } = await supabase.from('issues').insert({
                 category,
-                description,
-                location,
+                description: trimmedDescription,
+                location: trimmedLocation,
                 reporter_id: user.id
             });
 
@@ -33,7 +41,11 @@ export default function ReportIssueScreen({ navigation }) {
             Alert.alert('Success', 'Report submitted successfully!');
             navigation.goBack();
         } catch (e) {
-            Alert.alert('Error', e.message);
+            // Fail securely - do not expose raw database errors or stack traces to the user
+            const safeErrorMessage = e.message && e.message.includes('User not authenticated')
+                ? e.message
+                : 'Failed to submit issue report. Please try again.';
+            Alert.alert('Error', safeErrorMessage);
         } finally {
             setLoading(false);
         }
