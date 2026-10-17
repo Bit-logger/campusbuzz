@@ -193,6 +193,8 @@ export default function LoginScreen() {
                 <TouchableOpacity
                     onPress={takeIdCardPhoto}
                     style={[NB_STYLES.input, { height: 200, alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', marginBottom: 20 }]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Scan ID Card"
                 >
                     {idCardUri ? (
                         <Image source={{ uri: idCardUri }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
@@ -305,6 +307,8 @@ export default function LoginScreen() {
                         <TouchableOpacity
                             style={{ position: 'absolute', right: 10, top: 12 }}
                             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                            accessibilityRole="button"
+                            accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
                         >
                             <Text style={{ fontSize: 20 }}>{isPasswordVisible ? '🙈' : '👁️'}</Text>
                         </TouchableOpacity>
@@ -320,6 +324,7 @@ export default function LoginScreen() {
                         style={[NB_STYLES.btnSecondary, { marginTop: 10, backgroundColor: 'transparent', borderWidth: 0 }]}
                         onPress={() => setIsSignUpMode(!isSignUpMode)}
                         disabled={loading}
+                        accessibilityRole="button"
                     >
                         <Text style={[NB_STYLES.btnText, { color: COLORS.text, textDecorationLine: 'underline' }]}>
                             {isSignUpMode ? "Already have an account? Sign In" : "New User? Create Account"}
