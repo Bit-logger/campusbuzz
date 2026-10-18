@@ -1,0 +1,3 @@
+## 2024-05-24 - Custom Button Accessibility Props
+**Learning:** Custom interactive components like `SquishyButton` in React Native must explicitly forward `accessibilityLabel`, `accessibilityRole`, and `accessibilityState` to their root `TouchableWithoutFeedback` or `Pressable` components. If they don't, screen readers will not announce them correctly. Also, passing a React node to `accessibilityLabel` causes errors, so fallback logic (`typeof label === 'string' ? label : undefined`) is necessary when `label` can be either a string or a component.
+**Action:** Always verify custom wrapper components correctly forward a11y props to the underlying React Native primitive. Add safety checks for `accessibilityLabel` fallbacks.
