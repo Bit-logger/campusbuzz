@@ -33,7 +33,9 @@ export default function ReportIssueScreen({ navigation }) {
             Alert.alert('Success', 'Report submitted successfully!');
             navigation.goBack();
         } catch (e) {
-            Alert.alert('Error', e.message);
+            // Log error internally for debugging, don't expose stack trace or database error details to user
+            console.error('Submit report error:', e);
+            Alert.alert('Error', 'Failed to submit report. Please try again.');
         } finally {
             setLoading(false);
         }
