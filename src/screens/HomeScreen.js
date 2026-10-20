@@ -28,6 +28,8 @@ export default function HomeScreen({ navigation }) {
                         width: 50, height: 50, borderRadius: 25, backgroundColor: COLORS.primary,
                         borderWidth: 3, borderColor: 'black', alignItems: 'center', justifyContent: 'center'
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go to Profile"
                 >
                     <Ionicons name="person-outline" size={24} color="black" />
                 </TouchableOpacity>
@@ -40,6 +42,7 @@ export default function HomeScreen({ navigation }) {
                         style={{ backgroundColor: menu.color, marginBottom: 15, flexDirection: 'row', justifyContent: 'flex-start' }}
                         onPress={() => navigation.navigate(menu.screen)}
                         color={menu.color}
+                        accessibilityLabel={menu.title}
                     >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Ionicons name={menu.icon} size={24} color="black" style={{ marginRight: 10 }} />
