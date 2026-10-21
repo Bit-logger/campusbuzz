@@ -5,6 +5,7 @@ import { COLORS } from '../styles/theme';
 export default function SquishyButton({
     onPress,
     label,
+    accessibilityLabel,
     style,
     textStyle,
     disabled = false,
@@ -83,6 +84,9 @@ export default function SquishyButton({
             onPressOut={onPressOut}
             onPress={onPress}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityState={{ disabled }}
+            accessibilityLabel={accessibilityLabel || (typeof label === 'string' ? label : undefined)}
         >
             <Animated.View style={[
                 baseContainerStyle,
