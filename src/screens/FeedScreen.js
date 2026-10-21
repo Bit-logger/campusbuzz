@@ -4,6 +4,86 @@ import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
+// ⚡ BOLT OPTIMIZATION: Memoized PostItem Component
+// WHAT: Extracted inline rendering logic from FlatList's renderItem into a React.memo component.
+// WHY: Previously, an inline render function re-created UI elements for EVERY item when any state in FeedScreen changed (e.g. typing a comment).
+// IMPACT: Reduces O(N) re-renders across all items to O(1) when parent component state changes.
+const PostItem = React.memo(({ item, isLiked, currentUser, onLike, onDelete, onOpenComments }) => {
+    return (
+        <View style={NB_STYLES.card}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{
+                        width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
+                        borderWidth: 2, borderColor: 'black', marginRight: 10,
+                        alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                    }}>
+                        {item.profiles?.avatar_url ? (
+                            <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', height: '100%' }} />
+                        ) : (
+                            <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
+                        )}
+                    </View>
+                    <View>
+                        <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+                            {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
+                    </View>
+                </View>
+                {/* Delete Post Button (Only for author) */}
+                {currentUser?.id === item.user_id && (
+                    <TouchableOpacity onPress={() => onDelete(item)}>
+                        <Text style={{ fontSize: 20 }}>🗑️</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Image */}
+            <Image
+                source={{ uri: item.image_url }}
+                style={{
+                    width: '100%', height: 350, backgroundColor: '#f0f0f0',
+                    borderWidth: 2, borderColor: 'black', marginBottom: 12
+                }}
+                resizeMode="cover"
+            />
+
+            {/* Actions */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 }}>
+                {/* Like Button */}
+                <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => onLike(item, isLiked)}
+                >
+                    <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
+                </TouchableOpacity>
+
+                {/* Comment Button */}
+                <TouchableOpacity onPress={() => onOpenComments(item.id)}>
+                    <Text style={{ fontSize: 28 }}>💬</Text>
+                </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontWeight: '900', fontSize: 16, marginBottom: 5 }}>{item.likes_count} likes</Text>
+
+            {/* Caption */}
+            {item.caption && (
+                <Text style={{ fontSize: 16, lineHeight: 22 }}>
+                    <Text style={{ fontWeight: 'bold' }}>
+                        {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                    </Text> {item.caption}
+                </Text>
+            )}
+
+            <TouchableOpacity onPress={() => onOpenComments(item.id)}>
+                <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
+            </TouchableOpacity>
+        </View>
+    );
+});
+
 export default function FeedScreen({ navigation }) {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,22 +138,26 @@ export default function FeedScreen({ navigation }) {
         }, [currentUser])
     );
 
+    // ⚡ BOLT OPTIMIZATION: Memoized callbacks
+    // WHAT: Wrapped handlers (handleLike, handleDeletePost, openComments) in useCallback.
+    // WHY: Prevents the regeneration of function references on every render, which would break the React.memo optimization on PostItem.
+    // IMPACT: Avoids triggering unnecessary re-renders of child components that depend on these callbacks.
+
     // --- Like Logic (Fixed with RPC) ---
-    const handleLike = async (post) => {
+    const handleLike = useCallback(async (post, isLiked) => {
         if (!currentUser) return;
 
-        const isLiked = likedPostIds.has(post.id);
         const newLikeCount = isLiked ? post.likes_count - 1 : post.likes_count + 1;
 
         // 1. Optimistic UI Update (Immediate feedback)
-        setPosts(current =>
-            current.map(p =>
+        setPosts(prevPosts =>
+            prevPosts.map(p =>
                 p.id === post.id ? { ...p, likes_count: newLikeCount } : p
             )
         );
 
-        setLikedPostIds(prev => {
-            const next = new Set(prev);
+        setLikedPostIds(prevIds => {
+            const next = new Set(prevIds);
             if (isLiked) next.delete(post.id);
             else next.add(post.id);
             return next;
@@ -87,10 +171,10 @@ export default function FeedScreen({ navigation }) {
             Alert.alert("Error", "Could not update like. Please try again.");
             // Revert optimistic update if needed (omitted for simplicity)
         }
-    };
+    }, [currentUser]);
 
     // --- Delete Logic ---
-    const handleDeletePost = async (post) => {
+    const handleDeletePost = useCallback(async (post) => {
         Alert.alert(
             "Delete Post",
             "Are you sure you want to delete this post?",
@@ -102,7 +186,7 @@ export default function FeedScreen({ navigation }) {
                     onPress: async () => {
                         const { error } = await supabase.from('feed_posts').delete().eq('id', post.id);
                         if (!error) {
-                            setPosts(prev => prev.filter(p => p.id !== post.id));
+                            setPosts(prevPosts => prevPosts.filter(p => p.id !== post.id));
                             Alert.alert("Success", "Post deleted");
                         } else {
                             Alert.alert("Error", error.message);
@@ -111,7 +195,7 @@ export default function FeedScreen({ navigation }) {
                 }
             ]
         );
-    };
+    }, []);
 
     const handleDeleteComment = async (commentId) => {
         Alert.alert(
@@ -136,7 +220,7 @@ export default function FeedScreen({ navigation }) {
     };
 
     // --- Comment Logic ---
-    const openComments = async (postId) => {
+    const openComments = useCallback(async (postId) => {
         setActivePostId(postId);
         setModalVisible(true);
         setLoadingComments(true);
@@ -150,7 +234,7 @@ export default function FeedScreen({ navigation }) {
 
         if (!error) setComments(data);
         setLoadingComments(false);
-    };
+    }, []);
 
     const submitComment = async () => {
         if (!newComment.trim() || !currentUser) return;
@@ -179,83 +263,21 @@ export default function FeedScreen({ navigation }) {
         }
     };
 
-    const renderPost = ({ item }) => {
+    // ⚡ BOLT OPTIMIZATION: Memoized renderItem
+    const renderPost = useCallback(({ item }) => {
         const isLiked = likedPostIds.has(item.id);
 
         return (
-            <View style={NB_STYLES.card}>
-                {/* Header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View style={{
-                            width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
-                            borderWidth: 2, borderColor: 'black', marginRight: 10,
-                            alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                        }}>
-                            {item.profiles?.avatar_url ? (
-                                <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', height: '100%' }} />
-                            ) : (
-                                <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
-                            )}
-                        </View>
-                        <View>
-                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                {item.profiles?.nickname || item.user_email?.split('@')[0]}
-                            </Text>
-                            <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
-                        </View>
-                    </View>
-                    {/* Delete Post Button (Only for author) */}
-                    {currentUser?.id === item.user_id && (
-                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
-                            <Text style={{ fontSize: 20 }}>🗑️</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                {/* Image */}
-                <Image
-                    source={{ uri: item.image_url }}
-                    style={{
-                        width: '100%', height: 350, backgroundColor: '#f0f0f0',
-                        borderWidth: 2, borderColor: 'black', marginBottom: 12
-                    }}
-                    resizeMode="cover"
-                />
-
-                {/* Actions */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 }}>
-                    {/* Like Button */}
-                    <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center' }}
-                        onPress={() => handleLike(item)}
-                    >
-                        <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
-                    </TouchableOpacity>
-
-                    {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
-                        <Text style={{ fontSize: 28 }}>💬</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={{ fontWeight: '900', fontSize: 16, marginBottom: 5 }}>{item.likes_count} likes</Text>
-
-                {/* Caption */}
-                {item.caption && (
-                    <Text style={{ fontSize: 16, lineHeight: 22 }}>
-                        <Text style={{ fontWeight: 'bold' }}>
-                            {item.profiles?.nickname || item.user_email?.split('@')[0]}
-                        </Text> {item.caption}
-                    </Text>
-                )}
-
-                <TouchableOpacity onPress={() => openComments(item.id)}>
-                    <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
-                </TouchableOpacity>
-            </View>
+            <PostItem
+                item={item}
+                isLiked={isLiked}
+                currentUser={currentUser}
+                onLike={handleLike}
+                onDelete={handleDeletePost}
+                onOpenComments={openComments}
+            />
         );
-    };
+    }, [likedPostIds, currentUser, handleLike, handleDeletePost, openComments]);
 
     return (
         <View style={NB_STYLES.container}>
