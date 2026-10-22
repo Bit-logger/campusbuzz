@@ -64,6 +64,8 @@ export default function PartnerFinderScreen({ navigation }) {
                         style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
                         label="🗑️"
                         textStyle={{ fontSize: 20 }}
+                        accessibilityLabel="Delete partner request"
+                        accessibilityRole="button"
                     />
                 )}
             </View>

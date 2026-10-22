@@ -207,7 +207,7 @@ export default function FeedScreen({ navigation }) {
                     </View>
                     {/* Delete Post Button (Only for author) */}
                     {currentUser?.id === item.user_id && (
-                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
+                        <TouchableOpacity onPress={() => handleDeletePost(item)} accessibilityLabel="Delete post" accessibilityRole="button">
                             <Text style={{ fontSize: 20 }}>🗑️</Text>
                         </TouchableOpacity>
                     )}
@@ -311,7 +311,7 @@ export default function FeedScreen({ navigation }) {
                                     </View>
                                     {/* Delete Comment (Only for owner) */}
                                     {currentUser?.id === item.user_id && (
-                                        <TouchableOpacity onPress={() => handleDeleteComment(item.id)} style={{ padding: 5 }}>
+                                        <TouchableOpacity onPress={() => handleDeleteComment(item.id)} style={{ padding: 5 }} accessibilityLabel="Delete comment" accessibilityRole="button">
                                             <Text>🗑️</Text>
                                         </TouchableOpacity>
                                     )}
