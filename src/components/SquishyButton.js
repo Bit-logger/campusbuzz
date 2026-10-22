@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import { TouchableWithoutFeedback, Animated, View, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../styles/theme';
 
@@ -12,20 +12,27 @@ export default function SquishyButton({
     secondary = false,
     children
 }) {
-    // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // Performance optimization: Lazy initialize useRef to avoid creating unused
+    // Animated.Value objects on every render pass.
+    const scaleValue = useRef(null);
+    if (!scaleValue.current) {
+        scaleValue.current = new Animated.Value(1);
+    }
+    const translateY = useRef(null);
+    if (!translateY.current) {
+        translateY.current = new Animated.Value(0);
+    }
 
     const onPressIn = () => {
         if (disabled) return;
         Animated.parallel([
-            Animated.spring(scaleValue, {
+            Animated.spring(scaleValue.current, {
                 toValue: 0.95,
                 useNativeDriver: true,
                 speed: 20,
                 bounciness: 10
             }),
-            Animated.timing(translateY, {
+            Animated.timing(translateY.current, {
                 toValue: 4, // Move down to simulate press
                 duration: 50,
                 useNativeDriver: true
@@ -36,13 +43,13 @@ export default function SquishyButton({
     const onPressOut = () => {
         if (disabled) return;
         Animated.parallel([
-            Animated.spring(scaleValue, {
+            Animated.spring(scaleValue.current, {
                 toValue: 1,
                 useNativeDriver: true,
                 speed: 20,
                 bounciness: 10
             }),
-            Animated.timing(translateY, {
+            Animated.timing(translateY.current, {
                 toValue: 0, // Move back up
                 duration: 100,
                 useNativeDriver: true
@@ -88,7 +95,7 @@ export default function SquishyButton({
                 baseContainerStyle,
                 style,
                 {
-                    transform: [{ scale: scaleValue }, { translateY: translateY }],
+                    transform: [{ scale: scaleValue.current }, { translateY: translateY.current }],
                     // Remove shadow when pressed to simulate being pushed "into" the page
                     // This is a bit tricky with static styles, but the translateY helps
                 }
