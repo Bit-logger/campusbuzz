@@ -4,6 +4,83 @@ import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
+// Memoized PostItem to prevent O(N) re-renders across all items when liking/modifying a single post
+const PostItem = React.memo(({ item, isLiked, currentUserId, onLike, onDeletePost, onOpenComments }) => {
+    return (
+        <View style={NB_STYLES.card}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{
+                        width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
+                        borderWidth: 2, borderColor: 'black', marginRight: 10,
+                        alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                    }}>
+                        {item.profiles?.avatar_url ? (
+                            <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', height: '100%' }} />
+                        ) : (
+                            <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
+                        )}
+                    </View>
+                    <View>
+                        <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+                            {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
+                    </View>
+                </View>
+                {/* Delete Post Button (Only for author) */}
+                {currentUserId === item.user_id && (
+                    <TouchableOpacity onPress={() => onDeletePost(item.id)}>
+                        <Text style={{ fontSize: 20 }}>🗑️</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Image */}
+            <Image
+                source={{ uri: item.image_url }}
+                style={{
+                    width: '100%', height: 350, backgroundColor: '#f0f0f0',
+                    borderWidth: 2, borderColor: 'black', marginBottom: 12
+                }}
+                resizeMode="cover"
+            />
+
+            {/* Actions */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 }}>
+                {/* Like Button */}
+                <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => onLike(item.id, item.likes_count, isLiked)}
+                >
+                    <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
+                </TouchableOpacity>
+
+                {/* Comment Button */}
+                <TouchableOpacity onPress={() => onOpenComments(item.id)}>
+                    <Text style={{ fontSize: 28 }}>💬</Text>
+                </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontWeight: '900', fontSize: 16, marginBottom: 5 }}>{item.likes_count} likes</Text>
+
+            {/* Caption */}
+            {item.caption && (
+                <Text style={{ fontSize: 16, lineHeight: 22 }}>
+                    <Text style={{ fontWeight: 'bold' }}>
+                        {item.profiles?.nickname || item.user_email?.split('@')[0]}
+                    </Text> {item.caption}
+                </Text>
+            )}
+
+            <TouchableOpacity onPress={() => onOpenComments(item.id)}>
+                <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
+            </TouchableOpacity>
+        </View>
+    );
+});
+
 export default function FeedScreen({ navigation }) {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,85 +135,58 @@ export default function FeedScreen({ navigation }) {
         }, [currentUser])
     );
 
-    // --- Like Logic (Fixed with RPC) ---
-    const handleLike = async (post) => {
+    // --- Like Logic (Memoized to prevent handler re-creation) ---
+    const handleLike = useCallback(async (postId, currentLikes, isLiked) => {
         if (!currentUser) return;
+        const newLikeCount = isLiked ? currentLikes - 1 : currentLikes + 1;
 
-        const isLiked = likedPostIds.has(post.id);
-        const newLikeCount = isLiked ? post.likes_count - 1 : post.likes_count + 1;
-
-        // 1. Optimistic UI Update (Immediate feedback)
-        setPosts(current =>
-            current.map(p =>
-                p.id === post.id ? { ...p, likes_count: newLikeCount } : p
-            )
-        );
-
+        setPosts(current => current.map(p => p.id === postId ? { ...p, likes_count: newLikeCount } : p));
         setLikedPostIds(prev => {
             const next = new Set(prev);
-            if (isLiked) next.delete(post.id);
-            else next.add(post.id);
+            isLiked ? next.delete(postId) : next.add(postId);
             return next;
         });
 
-        // 2. Server Call (Using the new secure function)
-        const { error } = await supabase.rpc('toggle_like', { _post_id: post.id });
-
+        const { error } = await supabase.rpc('toggle_like', { _post_id: postId });
         if (error) {
             console.error("Like error:", error);
             Alert.alert("Error", "Could not update like. Please try again.");
-            // Revert optimistic update if needed (omitted for simplicity)
         }
-    };
+    }, [currentUser]);
 
     // --- Delete Logic ---
-    const handleDeletePost = async (post) => {
-        Alert.alert(
-            "Delete Post",
-            "Are you sure you want to delete this post?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        const { error } = await supabase.from('feed_posts').delete().eq('id', post.id);
-                        if (!error) {
-                            setPosts(prev => prev.filter(p => p.id !== post.id));
-                            Alert.alert("Success", "Post deleted");
-                        } else {
-                            Alert.alert("Error", error.message);
-                        }
+    const handleDeletePost = useCallback(async (postId) => {
+        Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "Delete", style: "destructive", onPress: async () => {
+                    const { error } = await supabase.from('feed_posts').delete().eq('id', postId);
+                    if (!error) {
+                        setPosts(prev => prev.filter(p => p.id !== postId));
+                        Alert.alert("Success", "Post deleted");
+                    } else {
+                        Alert.alert("Error", error.message);
                     }
                 }
-            ]
-        );
-    };
+            }
+        ]);
+    }, []);
 
     const handleDeleteComment = async (commentId) => {
-        Alert.alert(
-            "Delete Comment",
-            "Are you sure?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        const { error } = await supabase.from('feed_comments').delete().eq('id', commentId);
-                        if (!error) {
-                            setComments(prev => prev.filter(c => c.id !== commentId));
-                        } else {
-                            Alert.alert("Error", "Could not delete comment");
-                        }
-                    }
+        Alert.alert("Delete Comment", "Are you sure?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "Delete", style: "destructive", onPress: async () => {
+                    const { error } = await supabase.from('feed_comments').delete().eq('id', commentId);
+                    if (!error) setComments(prev => prev.filter(c => c.id !== commentId));
+                    else Alert.alert("Error", "Could not delete comment");
                 }
-            ]
-        );
+            }
+        ]);
     };
 
     // --- Comment Logic ---
-    const openComments = async (postId) => {
+    const openComments = useCallback(async (postId) => {
         setActivePostId(postId);
         setModalVisible(true);
         setLoadingComments(true);
@@ -150,7 +200,7 @@ export default function FeedScreen({ navigation }) {
 
         if (!error) setComments(data);
         setLoadingComments(false);
-    };
+    }, []);
 
     const submitComment = async () => {
         if (!newComment.trim() || !currentUser) return;
@@ -179,83 +229,16 @@ export default function FeedScreen({ navigation }) {
         }
     };
 
-    const renderPost = ({ item }) => {
-        const isLiked = likedPostIds.has(item.id);
-
-        return (
-            <View style={NB_STYLES.card}>
-                {/* Header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View style={{
-                            width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
-                            borderWidth: 2, borderColor: 'black', marginRight: 10,
-                            alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                        }}>
-                            {item.profiles?.avatar_url ? (
-                                <Image source={{ uri: item.profiles.avatar_url }} style={{ width: '100%', height: '100%' }} />
-                            ) : (
-                                <Text style={{ fontWeight: 'bold' }}>{item.user_email?.charAt(0).toUpperCase()}</Text>
-                            )}
-                        </View>
-                        <View>
-                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                {item.profiles?.nickname || item.user_email?.split('@')[0]}
-                            </Text>
-                            <Text style={{ fontSize: 12, color: '#666' }}>{new Date(item.created_at).toDateString()}</Text>
-                        </View>
-                    </View>
-                    {/* Delete Post Button (Only for author) */}
-                    {currentUser?.id === item.user_id && (
-                        <TouchableOpacity onPress={() => handleDeletePost(item)}>
-                            <Text style={{ fontSize: 20 }}>🗑️</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                {/* Image */}
-                <Image
-                    source={{ uri: item.image_url }}
-                    style={{
-                        width: '100%', height: 350, backgroundColor: '#f0f0f0',
-                        borderWidth: 2, borderColor: 'black', marginBottom: 12
-                    }}
-                    resizeMode="cover"
-                />
-
-                {/* Actions */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 }}>
-                    {/* Like Button */}
-                    <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center' }}
-                        onPress={() => handleLike(item)}
-                    >
-                        <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
-                    </TouchableOpacity>
-
-                    {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
-                        <Text style={{ fontSize: 28 }}>💬</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={{ fontWeight: '900', fontSize: 16, marginBottom: 5 }}>{item.likes_count} likes</Text>
-
-                {/* Caption */}
-                {item.caption && (
-                    <Text style={{ fontSize: 16, lineHeight: 22 }}>
-                        <Text style={{ fontWeight: 'bold' }}>
-                            {item.profiles?.nickname || item.user_email?.split('@')[0]}
-                        </Text> {item.caption}
-                    </Text>
-                )}
-
-                <TouchableOpacity onPress={() => openComments(item.id)}>
-                    <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
+    const renderPost = useCallback(({ item }) => (
+        <PostItem
+            item={item}
+            isLiked={likedPostIds.has(item.id)}
+            currentUserId={currentUser?.id}
+            onLike={handleLike}
+            onDeletePost={handleDeletePost}
+            onOpenComments={openComments}
+        />
+    ), [likedPostIds, currentUser?.id, handleLike, handleDeletePost, openComments]);
 
     return (
         <View style={NB_STYLES.container}>
