@@ -10,6 +10,9 @@ export default function SquishyButton({
     disabled = false,
     color = COLORS.primary,
     secondary = false,
+    accessibilityLabel,
+    accessibilityRole,
+    accessibilityHint,
     children
 }) {
     // Animation value for the press effect
@@ -83,6 +86,10 @@ export default function SquishyButton({
             onPressOut={onPressOut}
             onPress={onPress}
             disabled={disabled}
+            accessibilityRole={accessibilityRole || 'button'}
+            accessibilityState={{ disabled }}
+            accessibilityLabel={typeof accessibilityLabel === 'string' ? accessibilityLabel : (typeof label === 'string' ? label : undefined)}
+            accessibilityHint={accessibilityHint}
         >
             <Animated.View style={[
                 baseContainerStyle,
