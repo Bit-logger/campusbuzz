@@ -107,8 +107,8 @@ export default function LoginScreen() {
             setUiState('pending');
 
         } catch (err) {
-            console.error(err);
-            Alert.alert("Upload Error", err.message);
+            console.error("ID Upload Error:", err);
+            Alert.alert("Upload Error", "Failed to upload ID card. Please try again.");
         }
         setLoading(false);
     };
