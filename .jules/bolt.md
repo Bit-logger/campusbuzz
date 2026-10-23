@@ -1,0 +1,3 @@
+## 2024-05-15 - React.memo and FlatList Optimization
+**Learning:** Extracting complex item logic into a separate `React.memo` component and memoizing passed callbacks using `useCallback` avoids O(N) re-renders across all items when parent state changes. When item-specific state (e.g. `isLiked`) exists, pass it back up via the callback rather than synchronously checking it in a state setter so the state can be used in optimistic updates safely.
+**Action:** Always memoize `FlatList` items in React Native if they have interactive states or if the list size can grow to prevent significant performance degradation.
