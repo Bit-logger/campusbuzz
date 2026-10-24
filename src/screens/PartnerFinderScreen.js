@@ -63,6 +63,7 @@ export default function PartnerFinderScreen({ navigation }) {
                         onPress={() => handleDelete(item.id)}
                         style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
                         label="🗑️"
+                        accessibilityLabel="Delete partner post"
                         textStyle={{ fontSize: 20 }}
                     />
                 )}
