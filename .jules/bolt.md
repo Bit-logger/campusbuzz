@@ -1,0 +1,3 @@
+## 2024-10-24 - FlatList Optimization with React.memo
+**Learning:** In React Native `FlatList`, rendering complex item components inline causes O(N) re-renders for all items whenever parent state (e.g. `posts`, `likedPostIds`) changes. Also, reading deferred state synchronously inside `useCallback` (e.g. `likedPostIds.has(item.id)`) can lead to stale closures if not properly added to the dependency array, which triggers further re-renders.
+**Action:** Always extract complex `FlatList` item logic into a separate `React.memo` component. Memoize passed callbacks using `useCallback`, and strictly pass required item-specific state (like `isLiked`) back up from the child component to the parent callback to safely update state without adding heavy dependencies.
