@@ -116,6 +116,7 @@ export default function MarketplaceScreen({ navigation }) {
                             style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 }}
                             onPress={() => handleDelete(item.id)}
                             label="🗑️"
+                            accessibilityLabel="Delete item"
                             textStyle={{ fontSize: 24 }}
                         />
                     </View>
