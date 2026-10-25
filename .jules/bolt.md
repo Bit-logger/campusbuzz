@@ -1,0 +1,4 @@
+
+## 2024-05-24 - Optimizing FlatList with React.memo and useCallback
+**Learning:** In React Native's `FlatList`, failing to memoize the render items and the callbacks passed to them can cause O(N) re-renders across the entire list whenever a parent state (like the list data or user object) changes. Passing item-specific state (e.g. `isLiked`) back up via the callback from the child component avoids adding the entire list state to the callback's dependency array, which would otherwise defeat the purpose of `useCallback` and trigger list-wide re-renders.
+**Action:** Extract complex list items into separate `React.memo` components, memoize all passed callbacks with `useCallback`, and utilize functional state updates or pass required item state back from the child to keep dependency arrays minimal.
