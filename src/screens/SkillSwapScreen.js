@@ -58,7 +58,7 @@ export default function SkillSwapScreen({ navigation }) {
                     <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{item.skill_have}</Text>
                 </View>
                 {(currentUser && currentUser.id === item.user_id) && (
-                    <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ padding: 5 }}>
+                    <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ padding: 5 }} accessibilityLabel="Delete skill" accessibilityRole="button">
                         <Text style={{ fontSize: 20 }}>🗑️</Text>
                     </TouchableOpacity>
                 )}

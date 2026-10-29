@@ -205,11 +205,11 @@ export default function CalendarScreen() {
         <View style={NB_STYLES.container}>
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <TouchableOpacity onPress={goToPrevMonth} style={localStyles.navBtn}>
+                <TouchableOpacity onPress={goToPrevMonth} style={localStyles.navBtn} accessibilityLabel="Previous month" accessibilityRole="button">
                     <Text style={localStyles.navBtnText}>{'<'}</Text>
                 </TouchableOpacity>
                 <Text style={NB_STYLES.headerTitle}>{currentMonthName} {currentYear}</Text>
-                <TouchableOpacity onPress={goToNextMonth} style={localStyles.navBtn}>
+                <TouchableOpacity onPress={goToNextMonth} style={localStyles.navBtn} accessibilityLabel="Next month" accessibilityRole="button">
                     <Text style={localStyles.navBtnText}>{'>'}</Text>
                 </TouchableOpacity>
             </View>
@@ -278,7 +278,7 @@ export default function CalendarScreen() {
                                     <Text style={{ fontWeight: 'bold' }}>{e.title}</Text>
                                     <Text>{e.description}</Text>
                                 </View>
-                                <TouchableOpacity onPress={() => handleDeleteEvent(e.id)} style={{ padding: 5 }}>
+                                <TouchableOpacity onPress={() => handleDeleteEvent(e.id)} style={{ padding: 5 }} accessibilityLabel="Delete event" accessibilityRole="button">
                                     <Text style={{ fontSize: 18 }}>🗑️</Text>
                                 </TouchableOpacity>
                             </View>
