@@ -66,7 +66,12 @@ export default function GigWorksScreen({ navigation }) {
                     <Text style={{ fontSize: 18, color: COLORS.primary, fontWeight: 'bold', marginVertical: 5 }}>💰 {item.amount}</Text>
                 </View>
                 {userId === item.user_id && (
-                    <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ padding: 5 }}>
+                    <TouchableOpacity
+                        onPress={() => handleDelete(item.id)}
+                        style={{ padding: 5 }}
+                        accessibilityLabel="Delete gig"
+                        accessibilityRole="button"
+                    >
                         <Ionicons name="trash-outline" size={24} color="red" />
                     </TouchableOpacity>
                 )}
