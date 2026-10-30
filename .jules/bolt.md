@@ -1,0 +1,3 @@
+## 2024-12-05 - FlatList Item Memoization
+**Learning:** When memoizing React callbacks that need item-specific state (e.g., `isLiked`) to safely update multiple parent states without adding them to the dependency array, passing the required state back up from the child component via the callback (e.g., `onLike(item, isLiked)`) avoids reading it synchronously inside deferred state setter functions, preventing missing dependencies and avoiding excessive React Native `FlatList` re-renders.
+**Action:** Extract complex list items into separate `React.memo` components, memoize passed callbacks using `useCallback` with strict dependency arrays including state setters, and pass back item-specific state when calling parent handlers.
