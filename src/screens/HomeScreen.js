@@ -28,6 +28,8 @@ export default function HomeScreen({ navigation }) {
                         width: 50, height: 50, borderRadius: 25, backgroundColor: COLORS.primary,
                         borderWidth: 3, borderColor: 'black', alignItems: 'center', justifyContent: 'center'
                     }}
+                    accessibilityLabel="My Profile"
+                    accessibilityRole="button"
                 >
                     <Ionicons name="person-outline" size={24} color="black" />
                 </TouchableOpacity>
