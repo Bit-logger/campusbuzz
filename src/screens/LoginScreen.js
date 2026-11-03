@@ -193,6 +193,8 @@ export default function LoginScreen() {
                 <TouchableOpacity
                     onPress={takeIdCardPhoto}
                     style={[NB_STYLES.input, { height: 200, alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', marginBottom: 20 }]}
+                    accessibilityLabel="Scan ID card"
+                    accessibilityRole="button"
                 >
                     {idCardUri ? (
                         <Image source={{ uri: idCardUri }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
@@ -305,6 +307,8 @@ export default function LoginScreen() {
                         <TouchableOpacity
                             style={{ position: 'absolute', right: 10, top: 12 }}
                             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                            accessibilityLabel="Toggle password visibility"
+                            accessibilityRole="button"
                         >
                             <Text style={{ fontSize: 20 }}>{isPasswordVisible ? '🙈' : '👁️'}</Text>
                         </TouchableOpacity>
