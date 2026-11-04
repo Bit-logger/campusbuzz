@@ -229,12 +229,14 @@ export default function FeedScreen({ navigation }) {
                     <TouchableOpacity
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                         onPress={() => handleLike(item)}
+                        accessibilityLabel={isLiked ? "Unlike post" : "Like post"}
+                        accessibilityRole="button"
                     >
                         <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
                     </TouchableOpacity>
 
                     {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
+                    <TouchableOpacity onPress={() => openComments(item.id)} accessibilityLabel="View comments" accessibilityRole="button">
                         <Text style={{ fontSize: 28 }}>💬</Text>
                     </TouchableOpacity>
                 </View>
@@ -250,7 +252,7 @@ export default function FeedScreen({ navigation }) {
                     </Text>
                 )}
 
-                <TouchableOpacity onPress={() => openComments(item.id)}>
+                <TouchableOpacity onPress={() => openComments(item.id)} accessibilityLabel="View comments" accessibilityRole="button">
                     <Text style={{ color: '#666', marginTop: 5 }}>View all comments...</Text>
                 </TouchableOpacity>
             </View>
