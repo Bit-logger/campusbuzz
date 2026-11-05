@@ -1,0 +1,3 @@
+## 2024-05-14 - Lazy Initialization of Animated.Value
+**Learning:** Instantiating `Animated.Value` directly in `useState` (e.g., `useState(new Animated.Value(x))`) evaluates the argument on *every* render pass of the component, even though `useState` discards the subsequent values. For highly-used components like buttons, this creates a significant amount of unnecessary object creation and garbage collection overhead.
+**Action:** Always use lazy initializers (`useState(() => new Animated.Value(x))`) or a ref-based check (`if (!ref.current) ref.current = new Animated.Value(x)`) when instantiating `Animated.Value` or other expensive objects inside React functional components to ensure they are only created once during the initial render.
