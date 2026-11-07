@@ -229,12 +229,18 @@ export default function FeedScreen({ navigation }) {
                     <TouchableOpacity
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                         onPress={() => handleLike(item)}
+                        accessibilityLabel="Like post"
+                        accessibilityRole="button"
                     >
                         <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
                     </TouchableOpacity>
 
                     {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
+                    <TouchableOpacity
+                        onPress={() => openComments(item.id)}
+                        accessibilityLabel="Comment on post"
+                        accessibilityRole="button"
+                    >
                         <Text style={{ fontSize: 28 }}>💬</Text>
                     </TouchableOpacity>
                 </View>
