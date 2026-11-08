@@ -229,12 +229,18 @@ export default function FeedScreen({ navigation }) {
                     <TouchableOpacity
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                         onPress={() => handleLike(item)}
+                        accessibilityLabel={isLiked ? "Unlike post" : "Like post"}
+                        accessibilityRole="button"
                     >
                         <Text style={{ fontSize: 28, marginRight: 8 }}>{isLiked ? '❤️' : '🤍'}</Text>
                     </TouchableOpacity>
 
                     {/* Comment Button */}
-                    <TouchableOpacity onPress={() => openComments(item.id)}>
+                    <TouchableOpacity
+                        onPress={() => openComments(item.id)}
+                        accessibilityLabel="View comments"
+                        accessibilityRole="button"
+                    >
                         <Text style={{ fontSize: 28 }}>💬</Text>
                     </TouchableOpacity>
                 </View>
@@ -293,7 +299,11 @@ export default function FeedScreen({ navigation }) {
                         {/* Modal Header */}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 15, borderBottomWidth: 3 }}>
                             <Text style={{ fontSize: 20, fontWeight: '900' }}>Comments</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
+                            <TouchableOpacity
+                                onPress={() => setModalVisible(false)}
+                                accessibilityLabel="Close comments"
+                                accessibilityRole="button"
+                            >
                                 <Text style={{ fontSize: 20 }}>❌</Text>
                             </TouchableOpacity>
                         </View>
