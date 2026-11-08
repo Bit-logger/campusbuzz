@@ -15,8 +15,12 @@ export default function SquishyButton({
     accessibilityRole
 }) {
     // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // ⚡ Bolt Performance Optimization:
+    // Using lazy initializers for Animated.Value prevents the runtime from instantiating
+    // new unused Animated.Value objects on every render pass, reducing garbage collection overhead.
+    // This is especially impactful for a highly reused component like SquishyButton.
+    const [scaleValue] = useState(() => new Animated.Value(1));
+    const [translateY] = useState(() => new Animated.Value(0));
 
     const onPressIn = () => {
         if (disabled) return;
