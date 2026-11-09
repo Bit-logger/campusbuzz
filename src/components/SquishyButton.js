@@ -14,9 +14,10 @@ export default function SquishyButton({
     accessibilityLabel,
     accessibilityRole
 }) {
-    // Animation value for the press effect
-    const [scaleValue] = useState(new Animated.Value(1));
-    const [translateY] = useState(new Animated.Value(0));
+    // Performance optimization: Lazily initialize Animated.Value instances
+    // to avoid allocating new objects on every component re-render.
+    const [scaleValue] = useState(() => new Animated.Value(1));
+    const [translateY] = useState(() => new Animated.Value(0));
 
     const onPressIn = () => {
         if (disabled) return;
