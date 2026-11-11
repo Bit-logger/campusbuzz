@@ -1,0 +1,3 @@
+## 2024-11-11 - Lazy Initialization for Animated.Value
+**Learning:** React Native's `Animated.Value` instantiations inside standard `useState(new Animated.Value(...))` directly inside a functional component evaluate on *every single render pass* before React discards the new instance in favor of the stored one. Because `SquishyButton` is heavily used across multiple lists and screens, this caused unnecessary memory churn and garbage collection pressure.
+**Action:** Always use a lazy initializer callback (e.g., `useState(() => new Animated.Value(...))`) or a `useRef` with an initial null check (e.g., `if (!ref.current) ref.current = new Animated.Value(...)`) when instantiating `Animated.Value` or other heavy objects in React function components.
