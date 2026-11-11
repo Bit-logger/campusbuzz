@@ -305,6 +305,8 @@ export default function LoginScreen() {
                         <TouchableOpacity
                             style={{ position: 'absolute', right: 10, top: 12 }}
                             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                            accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+                            accessibilityRole="button"
                         >
                             <Text style={{ fontSize: 20 }}>{isPasswordVisible ? '🙈' : '👁️'}</Text>
                         </TouchableOpacity>
