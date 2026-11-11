@@ -1,0 +1,3 @@
+## 2026-10-29 - Lazy Animated.Value Initializers in SquishyButton
+**Learning:** Instantiating `new Animated.Value(...)` as a direct argument to `useState` or `useRef` causes a new Animated node to be allocated and evaluated on every component re-render pass, even though React discards it after the initial mount. In custom UI primitives like `SquishyButton` that are rendered repeatedly (such as lists or action rows), this creates avoidable GC and allocation overhead.
+**Action:** Always wrap `Animated.Value` instantiation in lazy initializers like `useState(() => new Animated.Value(...))` so the constructor runs only once on initial component mount.
