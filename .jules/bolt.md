@@ -1,0 +1,3 @@
+## 2025-05-20 - Lazy Animated.Value Initialization in Reusable Components
+**Learning:** In React Native, passing `new Animated.Value(...)` directly to `useState` causes a new animation object to be instantiated on every single render cycle before React discards it. In frequently re-rendered custom UI components like `SquishyButton`, this causes unnecessary heap allocations and GC pressure.
+**Action:** Always use lazy state initializers (`useState(() => new Animated.Value(...))`) or `useRef` for `Animated.Value` instances, and wrap reusable UI elements with `React.memo` to skip redundant re-renders when parent components re-render without prop changes.
