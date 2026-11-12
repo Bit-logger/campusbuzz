@@ -152,13 +152,22 @@ export default function FeedScreen({ navigation }) {
         setLoadingComments(false);
     };
 
+    const MAX_COMMENT_LENGTH = 500;
+
     const submitComment = async () => {
-        if (!newComment.trim() || !currentUser) return;
+        const trimmedComment = newComment.trim();
+        if (!trimmedComment || !currentUser) return;
+
+        // Security: Input length limit validation to prevent DoS / payload abuse
+        if (trimmedComment.length > MAX_COMMENT_LENGTH) {
+            Alert.alert("Input Error", `Comment cannot exceed ${MAX_COMMENT_LENGTH} characters.`);
+            return;
+        }
 
         const tempId = Date.now();
         const optimisticComment = {
             id: tempId,
-            content: newComment,
+            content: trimmedComment,
             user_email: currentUser.email,
             created_at: new Date().toISOString()
         };
@@ -175,7 +184,8 @@ export default function FeedScreen({ navigation }) {
 
         if (error) {
             Alert.alert("Error", "Failed to post comment");
-            // Remove optimistic comment?
+            // Revert optimistic comment update on failure
+            setComments(prev => prev.filter(c => c.id !== tempId));
         }
     };
 
@@ -327,6 +337,7 @@ export default function FeedScreen({ navigation }) {
                                 placeholder="Add a comment..."
                                 value={newComment}
                                 onChangeText={setNewComment}
+                                maxLength={500}
                             />
                             <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={submitComment}>
                                 <Text style={NB_STYLES.btnText}>SEND</Text>
