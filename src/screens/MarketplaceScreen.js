@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput, Image, Alert, ScrollView, Modal } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import SquishyButton from '../components/SquishyButton';
@@ -84,10 +84,14 @@ export default function MarketplaceScreen({ navigation }) {
         );
     }
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredItems = useMemo(() => {
+        // Performance optimization: Lowercase query once to avoid O(N) repeated string operations
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        return items.filter(item =>
+            item.title.toLowerCase().includes(lowerCaseQuery) ||
+            item.description?.toLowerCase().includes(lowerCaseQuery)
+        );
+    }, [items, searchQuery]);
 
     const renderItem = ({ item }) => {
         const isSold = item.title.startsWith('[SOLD]');
