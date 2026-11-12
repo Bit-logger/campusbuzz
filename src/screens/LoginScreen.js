@@ -113,10 +113,21 @@ export default function LoginScreen() {
         setLoading(false);
     };
 
+    // Security: Validate email format to prevent malicious input & redundant API calls
+    const isValidEmail = (emailStr) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(emailStr);
+    };
+
     // --- AUTH LOGIC ---
     async function handleAuth() {
         if (!email || !password) {
             Alert.alert("Missing Fields", "Please enter valid email and password.");
+            return;
+        }
+
+        if (!isValidEmail(email.trim())) {
+            Alert.alert("Invalid Email", "Please enter a valid email address.");
             return;
         }
 
