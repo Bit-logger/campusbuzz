@@ -6,9 +6,8 @@ import { useFocusEffect } from '@react-navigation/native';
 
 // Helper to check for admin (Mock implementation - replace with real role check)
 const isAdmin = (user) => {
-    // For MVP, checking specific email or just returning true for testing if needed.
-    // Replace 'admin@campusbuzz.com' with the actual admin email or logic.
-    return user?.email?.includes('admin');
+    // Exact equality match to avoid authorization bypass via substring matching (e.g. 'badminton@...')
+    return user?.email === 'admin@campusbuzz.com';
 };
 
 export default function CalendarScreen() {
