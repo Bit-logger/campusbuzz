@@ -50,6 +50,12 @@ export default function AddPostScreen({ navigation }) {
             return;
         }
 
+        // Input validation: Enforce maximum length limit on post caption (DoS / payload size risk)
+        if (caption.length > 500) {
+            Alert.alert('Error', 'Caption exceeds the maximum limit of 500 characters.');
+            return;
+        }
+
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -108,6 +114,7 @@ export default function AddPostScreen({ navigation }) {
                     onChangeText={setCaption}
                     placeholder="What's happening on campus today?"
                     multiline
+                    maxLength={500}
                 />
 
                 <TouchableOpacity style={NB_STYLES.btnPrimary} onPress={handleSubmit} disabled={loading}>
