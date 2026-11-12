@@ -108,7 +108,9 @@ export default function LoginScreen() {
 
         } catch (err) {
             console.error(err);
-            Alert.alert("Upload Error", err.message);
+            // Security: Fail securely by providing a generic error message to the user,
+            // avoiding the exposure of internal database, storage, or infrastructure details.
+            Alert.alert("Upload Error", "Failed to upload ID card. Please try again or contact support.");
         }
         setLoading(false);
     };
