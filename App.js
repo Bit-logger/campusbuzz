@@ -86,8 +86,8 @@ export default function App() {
       }
     } catch (err) {
       console.error("Profile Check Error:", err);
-      // Fallback: If network error or other issue
-      setAuthStatus('guest');
+      // Security Fallback: Fail closed on profile check errors so active sessions aren't treated as unverified guests
+      setAuthStatus('pending');
     }
     setLoading(false);
   }
