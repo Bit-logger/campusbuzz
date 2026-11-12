@@ -113,10 +113,22 @@ export default function LoginScreen() {
         setLoading(false);
     };
 
+    // Security Helper: Validate email format
+    const isValidEmail = (emailStr) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(emailStr);
+    };
+
     // --- AUTH LOGIC ---
     async function handleAuth() {
-        if (!email || !password) {
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail || !password) {
             Alert.alert("Missing Fields", "Please enter valid email and password.");
+            return;
+        }
+
+        if (!isValidEmail(trimmedEmail)) {
+            Alert.alert("Invalid Email", "Please enter a valid email address.");
             return;
         }
 
@@ -132,7 +144,7 @@ export default function LoginScreen() {
 
             // Just create account. No ID upload yet (because no session).
             const { data: { session, user }, error: signUpError } = await supabase.auth.signUp({
-                email: email,
+                email: trimmedEmail,
                 password: password,
                 options: { data: { phone_number: phoneNumber } }
             });
@@ -147,7 +159,7 @@ export default function LoginScreen() {
         } else {
             // --- SIGN IN (Step 2: Check Verification) ---
             const { error, data } = await supabase.auth.signInWithPassword({
-                email: email,
+                email: trimmedEmail,
                 password: password,
             });
 
