@@ -20,6 +20,9 @@ export default function ReportIssueScreen({ navigation }) {
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                throw new Error("User is not authenticated");
+            }
 
             const { error } = await supabase.from('issues').insert({
                 category,
