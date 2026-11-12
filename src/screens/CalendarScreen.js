@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, FlatList } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { NB_STYLES, COLORS } from '../styles/theme';
 import { useFocusEffect } from '@react-navigation/native';
+
+// Static fallback reference to avoid re-allocating empty object literals during lookups
+const EMPTY_EVENTS = { official: [], personal: [] };
 
 // Helper to check for admin (Mock implementation - replace with real role check)
 const isAdmin = (user) => {
@@ -94,23 +97,24 @@ export default function CalendarScreen() {
         setSelectedDate(null);
     };
 
-    const getDaysArray = () => {
+    // PERFORMANCE OPTIMIZATION:
+    // Memoize grid days calculation so date objects aren't recomputed on every
+    // unrelated render frame (e.g. typing in modal text input or selecting a date).
+    const days = useMemo(() => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        const days = [];
-        // Empty slots for previous month
+        const daysArr = [];
         for (let i = 0; i < firstDay; i++) {
-            days.push(null);
+            daysArr.push(null);
         }
-        // Days of current month
         for (let i = 1; i <= daysInMonth; i++) {
-            days.push(new Date(year, month, i));
+            daysArr.push(new Date(year, month, i));
         }
-        return days;
-    };
+        return daysArr;
+    }, [currentDate]);
 
     const formatDateKey = (date) => {
         if (!date) return null;
@@ -120,12 +124,28 @@ export default function CalendarScreen() {
         return `${year}-${month}-${day}`;
     };
 
-    const getEventsForDate = (dateStr) => {
-        // Robust matching: Check if the event date string *contains* the selected YYYY-MM-DD
-        const off = officialEvents.filter(e => e.date && e.date.includes(dateStr));
-        const pers = personalEvents.filter(e => e.date && e.date.includes(dateStr));
-        return { official: off, personal: pers };
-    };
+    // PERFORMANCE OPTIMIZATION:
+    // Pre-group events by date string (YYYY-MM-DD) into an O(1) hash map lookup.
+    // Previously, getEventsForDate ran .filter() twice across officialEvents and personalEvents
+    // for every single day cell in the calendar grid (~35+ times per render frame = O(N * D)).
+    // Mapping events once when officialEvents or personalEvents change reduces cell lookups from O(N * D) to O(1).
+    const eventsByDate = useMemo(() => {
+        const map = {};
+        const addEvent = (event, type) => {
+            if (!event.date) return;
+            const dateKey = event.date.slice(0, 10);
+            if (!map[dateKey]) map[dateKey] = { official: [], personal: [] };
+            map[dateKey][type].push(event);
+        };
+        officialEvents.forEach(e => addEvent(e, 'official'));
+        personalEvents.forEach(e => addEvent(e, 'personal'));
+        return map;
+    }, [officialEvents, personalEvents]);
+
+    const getEventsForDate = useCallback((dateStr) => {
+        if (!dateStr) return EMPTY_EVENTS;
+        return eventsByDate[dateStr] || EMPTY_EVENTS;
+    }, [eventsByDate]);
 
     const handleDayPress = (date) => {
         if (!date) return;
@@ -195,7 +215,6 @@ export default function CalendarScreen() {
     };
 
     // Rendering
-    const days = getDaysArray();
     const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
     const currentYear = currentDate.getFullYear();
 
